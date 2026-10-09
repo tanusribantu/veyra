@@ -214,6 +214,22 @@ tempCodeRunnerFile.py
 # Marimo
 marimo/_static/
 marimo/_lsp/
+# Node
+node_modules/
+dist/
+
+# Secrets and local config
+.env
+*.env.local
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
 __marimo__/
 
 # Streamlit
