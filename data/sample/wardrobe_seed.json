@@ -1,0 +1,200 @@
+[
+  {
+    "id": "item_top_001",
+    "name": "Classic White Oxford Shirt",
+    "category": "shirt",
+    "slot": "top",
+    "color": "white",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 3,
+    "style_tags": ["minimal", "smart_casual", "classic"]
+  },
+  {
+    "id": "item_top_002",
+    "name": "Navy Cotton Crewneck T-Shirt",
+    "category": "t-shirt",
+    "slot": "top",
+    "color": "navy",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 1,
+    "style_tags": ["minimal", "casual"]
+  },
+  {
+    "id": "item_top_003",
+    "name": "Black Heavyweight Boxy T-Shirt",
+    "category": "t-shirt",
+    "slot": "top",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "relaxed",
+    "formality": 1,
+    "style_tags": ["minimal", "streetwear", "casual"]
+  },
+  {
+    "id": "item_top_004",
+    "name": "Heather Gray Textured T-Shirt",
+    "category": "t-shirt",
+    "slot": "top",
+    "color": "gray",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 1,
+    "style_tags": ["casual", "minimal"]
+  },
+  {
+    "id": "item_top_005",
+    "name": "Olive Utility Overshirt",
+    "category": "overshirt",
+    "slot": "top",
+    "color": "olive",
+    "pattern": "solid",
+    "fit": "relaxed",
+    "formality": 2,
+    "style_tags": ["casual", "streetwear"]
+  },
+  {
+    "id": "item_top_006",
+    "name": "Beige Merino Knit Sweater",
+    "category": "sweater",
+    "slot": "top",
+    "color": "beige",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 3,
+    "style_tags": ["smart_casual", "classic", "minimal"]
+  },
+  {
+    "id": "item_top_007",
+    "name": "Burgundy Heavyweight Hoodie",
+    "category": "hoodie",
+    "slot": "top",
+    "color": "burgundy",
+    "pattern": "solid",
+    "fit": "relaxed",
+    "formality": 1,
+    "style_tags": ["streetwear", "casual"]
+  },
+  {
+    "id": "item_top_008",
+    "name": "Sky Blue Striped Dress Shirt",
+    "category": "shirt",
+    "slot": "top",
+    "color": "blue",
+    "pattern": "striped",
+    "fit": "slim",
+    "formality": 4,
+    "style_tags": ["formal", "smart_casual", "classic"]
+  },
+  {
+    "id": "item_bottom_001",
+    "name": "Dark Indigo Raw Selvedge Jeans",
+    "category": "jeans",
+    "slot": "bottom",
+    "color": "navy",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 2,
+    "style_tags": ["casual", "smart_casual", "classic"]
+  },
+  {
+    "id": "item_bottom_002",
+    "name": "Light Wash Relaxed Denim Jeans",
+    "category": "jeans",
+    "slot": "bottom",
+    "color": "blue",
+    "pattern": "solid",
+    "fit": "relaxed",
+    "formality": 1,
+    "style_tags": ["casual", "streetwear"]
+  },
+  {
+    "id": "item_bottom_003",
+    "name": "Khaki Tailored Chinos",
+    "category": "chinos",
+    "slot": "bottom",
+    "color": "khaki",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 3,
+    "style_tags": ["smart_casual", "classic", "minimal"]
+  },
+  {
+    "id": "item_bottom_004",
+    "name": "Charcoal Pleated Dress Trousers",
+    "category": "trousers",
+    "slot": "bottom",
+    "color": "charcoal",
+    "pattern": "solid",
+    "fit": "slim",
+    "formality": 4,
+    "style_tags": ["formal", "smart_casual", "classic"]
+  },
+  {
+    "id": "item_bottom_005",
+    "name": "Black Relaxed Cropped Chinos",
+    "category": "chinos",
+    "slot": "bottom",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "relaxed",
+    "formality": 2,
+    "style_tags": ["minimal", "streetwear", "casual"]
+  },
+  {
+    "id": "item_bottom_006",
+    "name": "Navy Slim Chinos",
+    "category": "chinos",
+    "slot": "bottom",
+    "color": "navy",
+    "pattern": "solid",
+    "fit": "slim",
+    "formality": 3,
+    "style_tags": ["smart_casual", "classic", "minimal"]
+  },
+  {
+    "id": "item_footwear_001",
+    "name": "Minimalist White Leather Sneakers",
+    "category": "sneakers",
+    "slot": "footwear",
+    "color": "white",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 2,
+    "style_tags": ["minimal", "casual", "smart_casual"]
+  },
+  {
+    "id": "item_footwear_002",
+    "name": "Brown Suede Penny Loafers",
+    "category": "loafers",
+    "slot": "footwear",
+    "color": "brown",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 3,
+    "style_tags": ["smart_casual", "classic"]
+  },
+  {
+    "id": "item_footwear_003",
+    "name": "Black Leather Chelsea Boots",
+    "category": "boots",
+    "slot": "footwear",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 3,
+    "style_tags": ["smart_casual", "streetwear", "classic"]
+  },
+  {
+    "id": "item_footwear_004",
+    "name": "Black Oxford Dress Shoes",
+    "category": "formal_shoes",
+    "slot": "footwear",
+    "color": "black",
+    "pattern": "solid",
+    "fit": "regular",
+    "formality": 5,
+    "style_tags": ["formal", "classic"]
+  }
+]
