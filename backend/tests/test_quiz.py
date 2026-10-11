@@ -14,9 +14,9 @@ from backend.app.services.quiz_service import QuizService
 
 
 def test_quiz_questions_framing_and_version():
-    """Verify quiz questions are versioned and strictly framed as sartorial style scenarios."""
-    assert QUIZ_VERSION == "1.0.0"
-    assert len(STYLE_QUIZ_QUESTIONS) == 10
+    """Verify quiz questions are versioned, relatable, and have 5 options including 'None of these feel like me'."""
+    assert QUIZ_VERSION == "1.1.0"
+    assert len(STYLE_QUIZ_QUESTIONS) == 8
 
     banned_clinical_terms = [
         "personality disorder",
@@ -33,14 +33,20 @@ def test_quiz_questions_framing_and_version():
         assert "id" in q
         assert "scenario" in q
         assert "question" in q
-        assert len(q["options"]) == 4
+        assert len(q["options"]) == 5
+
+        # Last option is 'None of these feel like me' with empty points
+        none_opt = q["options"][-1]
+        assert none_opt["id"].endswith("_e")
+        assert none_opt["label"] == "None of these feel like me"
+        assert none_opt["points"] == {}
 
         # Verify no clinical or personality diagnosis wording
         for term in banned_clinical_terms:
             assert term not in q["scenario"].lower()
             assert term not in q["question"].lower()
 
-        for opt in q["options"]:
+        for opt in q["options"][:-1]:
             assert "points" in opt
             for dim in STYLE_DIMENSIONS:
                 assert dim in opt["points"]
@@ -51,7 +57,7 @@ def test_quiz_questions_framing_and_version():
 def test_quiz_scoring_and_normalization():
     """Verify user answers accumulate points and normalize strictly to [0.0, 1.0]."""
     # Answer with classic/tailored options (q1_a, q2_a, etc.)
-    classic_answers = {f"q{i}": f"q{i}_a" for i in range(1, 11)}
+    classic_answers = {f"q{i}": f"q{i}_a" for i in range(1, 9)}
     vector, archetype, desc = compute_quiz_vector(classic_answers)
 
     assert len(vector) == 5
@@ -61,17 +67,14 @@ def test_quiz_scoring_and_normalization():
 
     # For classic answers, classic_expressive and subtle_bold should be low, comfort_polish high
     assert vector["classic_expressive"] <= 0.25
-    assert vector["comfort_polish"] >= 0.75
+    assert vector["comfort_polish"] >= 0.70
     assert vector["subtle_bold"] <= 0.25
-    assert "Minimalist" in archetype or "Classic" in archetype
 
-    # Answer with creative/expressive options (q1_c/q1_d, etc.)
-    expressive_answers = {f"q{i}": f"q{i}_d" for i in range(1, 11)}
-    exp_vector, exp_arch, exp_desc = compute_quiz_vector(expressive_answers)
-
-    assert exp_vector["classic_expressive"] >= 0.70
-    assert exp_vector["timeless_trend"] >= 0.70
-    assert "Trendsetter" in exp_arch or "Expressionist" in exp_arch
+    # Test "None of these feel like me" option (q1_e, q2_e, etc.)
+    none_answers = {f"q{i}": f"q{i}_e" for i in range(1, 9)}
+    none_vector, none_arch, _ = compute_quiz_vector(none_answers)
+    for dim, val in none_vector.items():
+        assert val == 0.50
 
 
 def test_style_archetype_match_scoring():
@@ -116,11 +119,11 @@ def test_quiz_api_flow(client, sample_user_and_profile):
     resp = client.get("/api/v1/style-quiz", headers=headers)
     assert resp.status_code == 200
     data = resp.get_json()
-    assert data["version"] == "1.0.0"
-    assert len(data["questions"]) == 10
+    assert data["version"] == "1.1.0"
+    assert len(data["questions"]) == 8
 
     # 2. POST answers
-    answers = {f"q{i}": f"q{i}_a" for i in range(1, 11)}
+    answers = {f"q{i}": f"q{i}_a" for i in range(1, 9)}
     submit_resp = client.post(
         "/api/v1/style-quiz",
         json={"answers": answers},

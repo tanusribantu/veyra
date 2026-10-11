@@ -20,11 +20,23 @@ describe('OutfitLookbookCard Component', () => {
       formality_score: 92,
       preference_score: 80,
       personal_attribute_score: 88,
+      style_archetype_score: 91,
+      soft_constraint_score: 85,
     },
     reasons: [
       { factor: 'color_compatibility', message: 'Neutral anchor pairing.' },
       { factor: 'occasion_match', message: 'Ideal for relaxed weekend outings.' },
       { factor: 'body_shape_silhouette', message: 'Tends to balance vertical proportion lines.' },
+    ],
+    fit_notes: [
+      {
+        item_id: 'item_1',
+        item_name: 'White Poplin Shirt',
+        lowered_component: 'color_harmony',
+        note: 'We appreciate your intention to feature your White Poplin Shirt for this casual edit.',
+        bridge_suggestion: 'Toning contrast with neutral accessories creates a harmonious palette.',
+        alternatives: ['item_99', 'item_100'],
+      },
     ],
   }
 
@@ -42,7 +54,7 @@ describe('OutfitLookbookCard Component', () => {
       style_score: 80,
       formality_score: 90,
       preference_score: 75,
-      // personal_attribute_score is omitted/skipped
+      // personal_attribute_score, style_archetype_score, soft_constraint_score omitted
     },
     reasons: [
       { factor: 'color_compatibility', message: 'Classic monochrome balance.' },
@@ -52,7 +64,7 @@ describe('OutfitLookbookCard Component', () => {
   it('renders the lookbook card with title, score, and items', () => {
     render(<OutfitLookbookCard recommendation={mockRecommendationWithAttributes} index={0} />)
 
-    expect(screen.getByText(/CASUAL EDIT/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /CASUAL EDIT/i })).toBeInTheDocument()
     expect(screen.getByText('White Poplin Shirt')).toBeInTheDocument()
     expect(screen.getByText('Navy Chinos')).toBeInTheDocument()
     expect(screen.getByText('White Sneakers')).toBeInTheDocument()
@@ -105,7 +117,7 @@ describe('OutfitLookbookCard Component', () => {
     expect(handleFeedback).toHaveBeenCalledWith('rec_test_123', 'worn')
   })
 
-  it('shows every score component including personal attribute match when present', () => {
+  it('shows every score component including personal attribute match and style archetype match when present', () => {
     render(<OutfitLookbookCard recommendation={mockRecommendationWithAttributes} index={0} />)
 
     const toggleBtn = screen.getByRole('button', { name: /Score Breakdown & Principles/i })
@@ -117,9 +129,11 @@ describe('OutfitLookbookCard Component', () => {
     expect(screen.getByText('Formality Cohesion')).toBeInTheDocument()
     expect(screen.getByText('Micro-Preference Adherence')).toBeInTheDocument()
     expect(screen.getByText('Personal Attribute Match')).toBeInTheDocument()
+    expect(screen.getByText('Style Archetype Match')).toBeInTheDocument()
+    expect(screen.getByText('Constraint Preference Adherence')).toBeInTheDocument()
   })
 
-  it('hides personal attribute match when skipped/missing', () => {
+  it('hides personal attribute match, style archetype match when skipped/missing', () => {
     render(<OutfitLookbookCard recommendation={mockRecommendationWithoutAttributes} index={0} />)
 
     const toggleBtn = screen.getByRole('button', { name: /Score Breakdown & Principles/i })
@@ -127,5 +141,33 @@ describe('OutfitLookbookCard Component', () => {
 
     expect(screen.getByText('Color Compatibility')).toBeInTheDocument()
     expect(screen.queryByText('Personal Attribute Match')).not.toBeInTheDocument()
+    expect(screen.queryByText('Style Archetype Match')).not.toBeInTheDocument()
+  })
+
+  it('renders fit notes with Keep it anyway and Show alternatives buttons', () => {
+    render(
+      <OutfitLookbookCard
+        recommendation={mockRecommendationWithAttributes}
+        index={0}
+        wardrobeItems={[{ id: 'item_99', name: 'Navy Merino Sweater' }]}
+      />
+    )
+
+    expect(screen.getByText(/Gentle Styling Note/i)).toBeInTheDocument()
+    expect(screen.getByText(/We appreciate your intention/i)).toBeInTheDocument()
+
+    const keepBtn = screen.getByRole('button', { name: /Keep it anyway/i })
+    expect(keepBtn).toBeInTheDocument()
+
+    const altsBtn = screen.getByRole('button', { name: /Show alternatives/i })
+    expect(altsBtn).toBeInTheDocument()
+    fireEvent.click(altsBtn)
+
+    expect(screen.getByText(/Atelier Alternative Suggestions/i)).toBeInTheDocument()
+    expect(screen.getByText('Navy Merino Sweater')).toBeInTheDocument()
+
+    // Dismiss note with "Keep it anyway"
+    fireEvent.click(keepBtn)
+    expect(screen.queryByText(/We appreciate your intention/i)).not.toBeInTheDocument()
   })
 })

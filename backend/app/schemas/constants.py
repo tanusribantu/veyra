@@ -42,11 +42,14 @@ SUPPORTED_SLOTS = ["top", "bottom", "footwear", "accessory"]
 
 SUPPORTED_OCCASIONS = [
     "casual",
-    "work",
-    "formal",
     "college",
-    "date_night",
+    "work",
+    "smart_casual",
     "party",
+    "formal_event",
+    "formal",
+    "traditional_event",
+    "date_night",
 ]
 
 SUPPORTED_STYLES = [

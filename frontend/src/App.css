@@ -1772,3 +1772,447 @@
     justify-content: space-between;
   }
 }
+
+/* ==========================================================================
+   PHASE 3: STYLE QUIZ, 5D VECTORS, BUILD MY LOOK & GENTLE FIT NOTES
+   ========================================================================== */
+
+/* --- STYLE QUIZ & ARCHETYPE MODAL --- */
+.quiz-modal-container {
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+.quiz-progress-track {
+  height: 4px;
+  background-color: var(--border-subtle);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-progress-bar {
+  height: 100%;
+  background-color: var(--accent-olive);
+  transition: width 0.4s ease-out;
+}
+
+.quiz-question-prompt {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.quiz-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.quiz-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.quiz-option-card:hover {
+  border-color: var(--border-medium);
+  background-color: var(--bg-subtle);
+  transform: translateY(-1px);
+}
+
+.quiz-option-card.is-selected {
+  border-color: var(--accent-olive);
+  background-color: rgba(92, 107, 78, 0.06);
+}
+
+.option-radio-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-medium);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.quiz-option-card.is-selected .option-radio-dot {
+  border-color: var(--accent-olive);
+}
+
+.dot-inner {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--accent-olive);
+}
+
+.option-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.option-label {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.option-desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.quiz-step-indicator {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Archetype Result View */
+.archetype-hero-card {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.archetype-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  background-color: rgba(92, 107, 78, 0.12);
+  color: var(--accent-olive);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.archetype-name {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.archetype-description {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 5D Continuous Style Vector Chart */
+.dimension-chart-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.dimension-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dimension-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.dim-pole.is-dominant {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dim-pct {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-olive);
+  background-color: rgba(92, 107, 78, 0.1);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-xs);
+}
+
+.dimension-track {
+  position: relative;
+  height: 6px;
+  background-color: var(--border-subtle);
+  border-radius: 9999px;
+  overflow: visible;
+}
+
+.dimension-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-olive-soft), var(--accent-olive));
+  border-radius: 9999px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dimension-marker {
+  position: absolute;
+  top: -3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--bg-surface);
+  border: 2.5px solid var(--accent-olive);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* --- BUILD MY LOOK CONTROLS --- */
+.build-my-look-container {
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.build-my-look-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.build-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.active-constraints-badge {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.5rem;
+  background-color: rgba(92, 107, 78, 0.15);
+  color: var(--accent-olive);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.wardrobe-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.item-picker-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-subtle);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.item-picker-chip:hover {
+  border-color: var(--border-medium);
+}
+
+.item-picker-chip.is-picked {
+  border-color: var(--accent-olive);
+  background-color: rgba(92, 107, 78, 0.08);
+}
+
+.item-picker-chip.is-avoided {
+  border-color: var(--accent-terracotta);
+  background-color: rgba(184, 80, 56, 0.08);
+}
+
+.chip-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.chip-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.strength-toggle-pills {
+  display: inline-flex;
+  border-left: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+}
+
+.pill-btn {
+  padding: 0.35rem 0.55rem;
+  background: transparent;
+  border: none;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pill-btn.active-hard {
+  background-color: var(--accent-terracotta);
+  color: #ffffff;
+}
+
+.pill-btn.active-soft {
+  background-color: var(--accent-olive);
+  color: #ffffff;
+}
+
+/* Constraint Blocked Alert */
+.constraint-blocked-alert {
+  background-color: rgba(184, 80, 56, 0.06);
+  border: 1px solid rgba(184, 80, 56, 0.25);
+  border-left: 3px solid var(--accent-terracotta);
+  border-radius: var(--radius-xs);
+  padding: 1.1rem 1.4rem;
+}
+
+/* --- GENTLE FIT NOTES ON OUTFIT CARDS --- */
+.fit-notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 1.25rem 0;
+  padding: 0 0.5rem;
+}
+
+.gentle-fit-note-card {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-olive);
+  border-radius: var(--radius-xs);
+  padding: 1.1rem 1.25rem;
+}
+
+.fit-note-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.fit-note-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-olive);
+}
+
+.fit-note-component-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background-color: var(--bg-surface);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+}
+
+.fit-note-body-text {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+}
+
+.fit-note-action-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.fit-note-action-btn {
+  font-size: 0.74rem;
+  padding: 0.35rem 0.85rem;
+}
+
+.fit-note-alternatives-drawer {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.alternatives-chips-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.alt-garment-chip {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* --- PERSONAL ATTRIBUTE SELECTORS (PHASE 3C) --- */
+.skin-swatch-btn:hover {
+  transform: scale(1.12);
+}
+
+.face-shape-card:hover {
+  border-color: var(--accent-olive) !important;
+  background-color: rgba(92, 107, 78, 0.04);
+}
+
+.body-shape-card:hover {
+  border-color: var(--accent-olive) !important;
+  background-color: rgba(92, 107, 78, 0.04);
+}
+

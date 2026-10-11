@@ -44,6 +44,20 @@ OCCASION_PROFILES = {
         "inappropriate_categories": {"shorts", "hoodie", "t-shirt", "jeans", "sneakers", "sandals"},
         "description": "Elevated formal dress requiring structured tailoring and dress footwear.",
     },
+    "formal_event": {
+        "target_formality": 5,
+        "allowed_range": (4, 5),
+        "ideal_categories": {"shirt", "trousers", "formal_shoes", "derbies"},
+        "inappropriate_categories": {"shorts", "hoodie", "t-shirt", "jeans", "sneakers", "sandals"},
+        "description": "Elevated formal dress requiring structured tailoring and dress footwear.",
+    },
+    "smart_casual": {
+        "target_formality": 3,
+        "allowed_range": (2, 4),
+        "ideal_categories": {"shirt", "polo", "sweater", "chinos", "trousers", "loafers", "boots", "derbies", "sneakers"},
+        "inappropriate_categories": {"shorts", "hoodie", "sandals"},
+        "description": "Polished, well-coordinated aesthetic balancing tailored and relaxed garments.",
+    },
     "college": {
         "target_formality": 1.5,
         "allowed_range": (1, 3),
@@ -64,6 +78,13 @@ OCCASION_PROFILES = {
         "ideal_categories": {"shirt", "t-shirt", "overshirt", "jeans", "chinos", "boots", "sneakers", "loafers"},
         "inappropriate_categories": {"sandals"},
         "description": "Expressive social gathering welcoming modern, stylish silhouettes.",
+    },
+    "traditional_event": {
+        "target_formality": 4,
+        "allowed_range": (3, 5),
+        "ideal_categories": {"shirt", "trousers", "chinos", "loafers", "derbies", "formal_shoes"},
+        "inappropriate_categories": {"shorts", "hoodie", "sandals"},
+        "description": "Celebratory, cultural, or traditional event with refined elevated styling.",
     },
 }
 

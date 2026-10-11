@@ -83,9 +83,9 @@ class FitNoteService:
 
             # 1. Check Occasion Suitability Mismatch
             occ_score = score_breakdown.get("occasion_score", 100.0)
-            target_formality = 4 if occasion in ["formal", "date_night"] else (3 if occasion == "work" else 2)
+            target_formality = 4 if occasion in ["formal", "formal_event", "date_night", "traditional_event"] else (3 if occasion in ["work", "smart_casual"] else 2)
 
-            if occ_score < 75.0 or (occasion in ["formal", "work"] and formality < target_formality):
+            if occ_score < 75.0 or (occasion in ["formal", "formal_event", "work", "smart_casual", "traditional_event"] and formality < target_formality):
                 alts_items = [
                     w for w in all_wardrobe_items
                     if w.get("slot") == slot and w.get("id") != item_id and int(w.get("formality", 2)) > formality

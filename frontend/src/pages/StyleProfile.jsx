@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Sliders, Palette, User, Shield, Check, Save } from 'lucide-react'
+import { Sliders, Palette, User, Shield, Compass, Save, RefreshCw, Trash2 } from 'lucide-react'
 import { api } from '../services/api'
 import { useToast } from '../components/Toast'
+import StyleQuizModal, { StyleDimensionChart } from '../components/StyleQuizModal'
+import SkinDepthSelector from '../components/SkinDepthSelector'
+import SkinUndertoneSelector from '../components/SkinUndertoneSelector'
+import FaceShapeSelector from '../components/FaceShapeSelector'
+import BodyShapeSelector from '../components/BodyShapeSelector'
 
 const STYLE_OPTIONS = [
   { id: 'minimal', label: 'Minimalist' },
@@ -29,27 +34,13 @@ const COLOR_OPTIONS = [
   'tan',
 ]
 
-const UNDERTONES = [
-  { id: 'warm', label: 'Warm (Golden / Peachy)' },
-  { id: 'cool', label: 'Cool (Pink / Rosy / Blue)' },
-  { id: 'neutral', label: 'Neutral (Balanced)' },
-  { id: 'olive', label: 'Olive (Subtle Green)' },
-]
-
-const FACE_SHAPES = [
-  { id: 'oval', label: 'Oval' },
-  { id: 'round', label: 'Round' },
-  { id: 'square', label: 'Square' },
-  { id: 'heart', label: 'Heart' },
-  { id: 'diamond', label: 'Diamond' },
-  { id: 'oblong', label: 'Oblong' },
-]
-
 export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, measurementsMissing }) {
   const { addToast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [measurementsData, setMeasurementsData] = useState(null)
+  const [quizResult, setQuizResult] = useState(null)
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false)
 
   const [profile, setProfile] = useState({
     name: '',
@@ -61,6 +52,7 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
     skin_undertone: 'neutral',
     skin_depth: 'medium',
     face_shape: 'oval',
+    body_shape_override: 'rectangle',
   })
 
   useEffect(() => {
@@ -83,12 +75,22 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
           skin_undertone: p.skin_undertone || prev.skin_undertone,
           skin_depth: p.skin_depth || prev.skin_depth,
           face_shape: p.face_shape || prev.face_shape,
+          body_shape_override: p.body_shape_override || prev.body_shape_override,
         }))
       }
 
       const m = await api.getMeasurements()
       if (m && !m.measurements_missing) {
         setMeasurementsData(m)
+      }
+
+      try {
+        const q = await api.getLatestQuizResult()
+        if (q && q.archetype) {
+          setQuizResult(q)
+        }
+      } catch {
+        // no quiz result yet
       }
     } catch (err) {
       console.log('Error loading profile:', err.message)
@@ -112,12 +114,30 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
     e.preventDefault()
     setIsSaving(true)
     try {
-      await api.updateProfile(profile)
+      const { name, ...profilePayload } = profile
+      await api.updateProfile(profilePayload)
+      if (name) {
+        try {
+          localStorage.setItem('veyra_user_name', name)
+        } catch {
+          // ignore
+        }
+      }
       addToast('Atelier style profile successfully updated.', 'success')
     } catch (err) {
       addToast(err.message || 'Failed to update profile.', 'error')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDeleteQuizResult = async () => {
+    try {
+      await api.deleteQuizResult()
+      setQuizResult(null)
+      addToast('Style quiz archetype reset.', 'success')
+    } catch (err) {
+      addToast(err.message || 'Could not reset quiz result.', 'error')
     }
   }
 
@@ -132,7 +152,16 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
           </p>
         </div>
 
-        <div className="profile-header-actions" style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="profile-header-actions" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setIsQuizModalOpen(true)}
+            className="btn-editorial-secondary"
+          >
+            <Compass size={15} />
+            <span>{quizResult ? 'Archetype Quiz' : 'Take Style Quiz'}</span>
+          </button>
+
           {onOpenOnboarding && (
             <button
               type="button"
@@ -225,48 +254,124 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
             </div>
           </section>
 
-          {/* Personal Undertone & Facial Silhouette */}
+          {/* Personal Complexion & Facial Harmony */}
           <section className="profile-section editorial-card">
             <div className="section-title-row">
               <Sliders size={18} className="section-icon" />
               <h3>Complexion & Facial Harmony</h3>
             </div>
-            <p className="section-desc">Informs neckline and jewelry metal temperature recommendations.</p>
+            <p className="section-desc">Informs neckline, lapel width, and jewelry metal temperature recommendations.</p>
 
-            <div className="form-row-2" style={{ marginTop: '1rem' }}>
-              <div className="form-field">
-                <label htmlFor="undertone-select" className="input-label">Skin Undertone</label>
-                <select
-                  id="undertone-select"
-                  className="editorial-select"
-                  value={profile.skin_undertone}
-                  onChange={(e) => setProfile({ ...profile, skin_undertone: e.target.value })}
-                >
-                  {UNDERTONES.map((u) => (
-                    <option key={u.id} value={u.id}>{u.label}</option>
-                  ))}
-                </select>
-              </div>
+            <div style={{ marginTop: '1.25rem' }}>
+              <label className="input-label" style={{ marginBottom: '0.4rem', display: 'block' }}>Skin Depth</label>
+              <SkinDepthSelector
+                value={profile.skin_depth}
+                onChange={(val) => setProfile({ ...profile, skin_depth: val })}
+              />
+            </div>
 
-              <div className="form-field">
-                <label htmlFor="face-shape-select" className="input-label">Face Shape</label>
-                <select
-                  id="face-shape-select"
-                  className="editorial-select"
-                  value={profile.face_shape}
-                  onChange={(e) => setProfile({ ...profile, face_shape: e.target.value })}
-                >
-                  {FACE_SHAPES.map((f) => (
-                    <option key={f.id} value={f.id}>{f.label}</option>
-                  ))}
-                </select>
-              </div>
+            <div style={{ marginTop: '1.5rem' }}>
+              <label className="input-label" style={{ marginBottom: '0.4rem', display: 'block' }}>Skin Undertone</label>
+              <SkinUndertoneSelector
+                value={profile.skin_undertone}
+                onChange={(val) => setProfile({ ...profile, skin_undertone: val })}
+              />
+            </div>
+
+            <div style={{ marginTop: '1.5rem' }}>
+              <label className="input-label" style={{ marginBottom: '0.4rem', display: 'block' }}>Face Shape</label>
+              <FaceShapeSelector
+                value={profile.face_shape}
+                onChange={(val) => setProfile({ ...profile, face_shape: val })}
+              />
+            </div>
+          </section>
+
+          {/* Body Silhouette & Proportions */}
+          <section className="profile-section editorial-card">
+            <div className="section-title-row">
+              <Sliders size={18} className="section-icon" />
+              <h3>Body Silhouette & Proportions</h3>
+            </div>
+            <p className="section-desc">Calculates proportion recommendations without requiring photos or mandatory measurements.</p>
+
+            <div style={{ marginTop: '1rem' }}>
+              <BodyShapeSelector
+                value={profile.body_shape_override}
+                onChange={(val) => setProfile({ ...profile, body_shape_override: val })}
+                onOpenTapeMeasurements={onOpenMeasurements}
+              />
             </div>
           </section>
         </div>
 
-        {/* Side Column: Proportion Intelligence Overview */}
+        {/* Side Column: Style Archetype & Proportion Intelligence */}
         <div className="profile-side-col">
+          {/* Style Archetype Card */}
+          <div className="archetype-profile-card editorial-card" style={{ marginBottom: '1.5rem' }}>
+            <div className="card-top-icon">
+              <Compass size={22} className="shield-icon" />
+            </div>
+            <span className="eyebrow">SARTORIAL ARCHETYPE INTELLIGENCE</span>
+            <h3>Style Archetype</h3>
+
+            {quizResult ? (
+              <div className="archetype-summary-content animate-fade-in-up">
+                <div className="shape-badge" style={{ backgroundColor: 'rgba(92, 107, 78, 0.12)', color: 'var(--accent-olive)' }}>
+                  <span>{quizResult.archetype}</span>
+                </div>
+                <p className="shape-desc" style={{ marginTop: '8px', fontSize: '0.86rem', lineHeight: '1.5' }}>
+                  {quizResult.archetype_description}
+                </p>
+
+                <div style={{ marginTop: '1.25rem' }}>
+                  <span className="eyebrow" style={{ fontSize: '0.66rem', marginBottom: '8px', display: 'block' }}>
+                    5D Vector Blueprint
+                  </span>
+                  <StyleDimensionChart vector={quizResult.vector} />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuizModalOpen(true)}
+                    className="btn-editorial-secondary"
+                    style={{ flex: 1, fontSize: '0.78rem' }}
+                  >
+                    <RefreshCw size={13} />
+                    <span>Retake Quiz</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDeleteQuizResult}
+                    className="btn-editorial-ghost"
+                    style={{ fontSize: '0.78rem', color: 'var(--accent-terracotta)' }}
+                    title="Reset archetype"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="archetype-empty-summary">
+                <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', lineHeight: '1.5', marginTop: '8px' }}>
+                  Calibrate your personal aesthetic archetype across 10 scenario choices. Scores normalize into a 5-dimension continuous style vector.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsQuizModalOpen(true)}
+                  className="btn-editorial-primary"
+                  style={{ width: '100%', marginTop: '1.25rem' }}
+                >
+                  <Compass size={14} />
+                  <span>Take Archetype Quiz</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Geometric Proportion Intelligence Card */}
           <div className="proportion-atelier-card editorial-card">
             <div className="card-top-icon">
               <Shield size={22} className="shield-icon" />
@@ -325,6 +430,17 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
           </div>
         </div>
       </div>
+
+      {/* Style Quiz Modal */}
+      <StyleQuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        initialResult={quizResult}
+        onComplete={(res) => {
+          setQuizResult(res)
+          setIsQuizModalOpen(false)
+        }}
+      />
     </div>
   )
 }

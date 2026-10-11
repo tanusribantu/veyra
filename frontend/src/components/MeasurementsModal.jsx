@@ -94,16 +94,13 @@ export default function MeasurementsModal({ isOpen, onClose, onMeasurementsUpdat
     setIsLoading(true)
 
     try {
-      const isInch = unit === 'in'
-      const toCm = (val) => (isInch ? parseFloat(val) * 2.54 : parseFloat(val))
-
       const payload = {
-        height_cm: toCm(formValues.height),
-        shoulder_cm: toCm(formValues.shoulder),
-        chest_bust_cm: toCm(formValues.chest),
-        waist_cm: toCm(formValues.waist),
-        hips_cm: toCm(formValues.hips),
-        preferred_unit: unit,
+        height: parseFloat(formValues.height),
+        shoulder: parseFloat(formValues.shoulder),
+        chest_bust: parseFloat(formValues.chest),
+        waist: parseFloat(formValues.waist),
+        hips: parseFloat(formValues.hips),
+        unit: unit,
       }
 
       const res = await api.saveMeasurements(payload)

@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Sparkles,
+  Check,
 } from 'lucide-react'
 import GarmentSvg from './GarmentSvg'
 
@@ -78,18 +80,31 @@ export default function OutfitLookbookCard({
   recommendation,
   index = 0,
   onFeedback,
+  wardrobeItems = [],
 }) {
   const [showDetails, setShowDetails] = useState(false)
   const [activeFeedback, setActiveFeedback] = useState(
     recommendation?.feedback?.feedback_type || recommendation?.user_feedback || null
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [dismissedNotes, setDismissedNotes] = useState({})
+  const [expandedAlts, setExpandedAlts] = useState({})
 
   const items = recommendation?.items || []
   const rawScore = recommendation?.score ?? recommendation?.overall_score ?? 85
   const breakdown = recommendation?.breakdown || recommendation?.score_breakdown || {}
   const reasons = recommendation?.reasons || []
   const explanation = recommendation?.explanation || {}
+  const fitNotes = recommendation?.fit_notes || []
+
+  // Create lookup dictionary for alternative item names
+  const wardrobeMap = React.useMemo(() => {
+    const map = {}
+    wardrobeItems.forEach((w) => {
+      if (w.id) map[w.id] = w.name || `${w.color} ${w.category}`
+    })
+    return map
+  }, [wardrobeItems])
 
   const findReason = (factor) => {
     const found = reasons.find((r) => r.factor === factor || r.factor?.startsWith(factor))
@@ -117,13 +132,17 @@ export default function OutfitLookbookCard({
   const shoesItem = items.find((i) => i.slot === 'footwear')
   const accessoryItems = items.filter((i) => i.slot === 'accessory' || i.slot === 'outerwear')
 
-  // Score component extraction (supporting both backend naming patterns)
+  // Score component extraction (supporting all backend naming patterns)
   const colorVal = breakdown.color_score ?? breakdown.color_harmony
   const occasionVal = breakdown.occasion_score ?? breakdown.occasion_fit
   const styleVal = breakdown.style_score ?? breakdown.style_cohesion
   const formalityVal = breakdown.formality_score ?? breakdown.formality_cohesion
   const preferenceVal = breakdown.preference_score ?? breakdown.micro_preferences
   const personalAttrVal = breakdown.personal_attribute_score ?? breakdown.personal_attributes
+  const styleArchetypeVal = breakdown.style_archetype_score ?? breakdown.style_archetype
+  const softConstraintVal = breakdown.soft_constraint_score ?? breakdown.soft_constraints
+
+  const visibleFitNotes = fitNotes.filter((note, nIdx) => !dismissedNotes[note.item_id || nIdx])
 
   return (
     <article
@@ -212,6 +231,72 @@ export default function OutfitLookbookCard({
         </div>
       </div>
 
+      {/* Gentle Fit Notes Section (Phase 3) */}
+      {visibleFitNotes.length > 0 && (
+        <div className="fit-notes-container animate-fade-in-up">
+          {visibleFitNotes.map((note, nIdx) => {
+            const noteKey = note.item_id || nIdx
+            const isAltsOpen = Boolean(expandedAlts[noteKey])
+            return (
+              <div key={noteKey} className="gentle-fit-note-card">
+                <div className="fit-note-header-row">
+                  <div className="fit-note-tag">
+                    <Sparkles size={13} />
+                    <span>Gentle Styling Note &bull; {note.item_name}</span>
+                  </div>
+                  {note.lowered_component && (
+                    <span className="fit-note-component-badge">
+                      {note.lowered_component.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </div>
+
+                <p className="fit-note-body-text">{note.note}</p>
+
+                <div className="fit-note-action-row">
+                  <button
+                    type="button"
+                    onClick={() => setDismissedNotes((prev) => ({ ...prev, [noteKey]: true }))}
+                    className="btn-editorial-ghost fit-note-action-btn"
+                  >
+                    <Check size={13} />
+                    <span>Keep it anyway</span>
+                  </button>
+
+                  {note.alternatives && note.alternatives.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedAlts((prev) => ({ ...prev, [noteKey]: !prev[noteKey] }))}
+                      className="btn-editorial-secondary fit-note-action-btn"
+                    >
+                      <span>{isAltsOpen ? 'Hide alternatives' : 'Show alternatives'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {isAltsOpen && (
+                  <div className="fit-note-alternatives-drawer animate-fade-in-up">
+                    <span className="eyebrow" style={{ fontSize: '0.66rem', marginBottom: '4px', display: 'block' }}>
+                      Atelier Alternative Suggestions
+                    </span>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                      {note.bridge_suggestion}
+                    </p>
+                    <div className="alternatives-chips-flex">
+                      {note.alternatives.map((altId) => (
+                        <span key={altId} className="alt-garment-chip">
+                          {wardrobeMap[altId] || altId}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Expandable Breakdown Drawer */}
       <div className="lookbook-breakdown-section">
         <button
@@ -278,6 +363,33 @@ export default function OutfitLookbookCard({
                     findReason('neckline_face_shape') ||
                     explanation.silhouette_balance ||
                     'Silhouette and neckline synergy tailored to your natural proportions.'
+                  }
+                />
+              )}
+
+              {/* Style Archetype Match: Shown when style quiz result exists */}
+              {styleArchetypeVal !== undefined && styleArchetypeVal !== null && (
+                <ScoreBar
+                  label="Style Archetype Match"
+                  value={styleArchetypeVal}
+                  explanation={
+                    findReason('style_archetype') ||
+                    findReason('style_archetype_match') ||
+                    explanation.style_archetype ||
+                    'Harmonizes with your calibrated 5-dimension aesthetic archetype vector.'
+                  }
+                />
+              )}
+
+              {/* Soft Constraint Match: Shown when soft constraints are evaluated */}
+              {softConstraintVal !== undefined && softConstraintVal !== null && (
+                <ScoreBar
+                  label="Constraint Preference Adherence"
+                  value={softConstraintVal}
+                  explanation={
+                    findReason('soft_constraint') ||
+                    explanation.soft_constraint ||
+                    'Adherence to your soft inclusion and avoidance styling requests.'
                   }
                 />
               )}
