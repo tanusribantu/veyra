@@ -68,36 +68,71 @@ Veyra is a personal style intelligence platform designed to understand an indivi
 pip install -r backend/requirements.txt
 ```
 
-### 2. Database Initialization
-Database tables are automatically created safely via `db.create_all()` without deleting existing data:
+### 2. Database & Alembic Migrations
+Veyra supports SQLite for offline local development and PostgreSQL (Supabase) for production/staging:
+- **Default (Local SQLite)**: `DATABASE_URL=sqlite:///instance/veyra.db`
+- **Supabase PostgreSQL**: Set `DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres` in `.env`
+
+To apply schema migrations safely without deleting existing data:
 ```bash
-python backend/run.py
+# Run migrations up to latest revision
+python -m alembic upgrade head
 ```
 
-### 3. Running Tests
-Run all unit and integration test suites:
+To create new migrations after model changes:
 ```bash
-python -m pytest backend/tests -v
+python -m alembic revision --autogenerate -m "description_of_change"
+```
+
+### 3. Authentication & Supabase Configuration
+Veyra uses Supabase Auth with JWKS asymmetric token verification:
+1. **Frontend**: Supabase JS client handles email/password sign-up, sign-in, password reset, and Google OAuth.
+2. **Backend**: Flask verifies access tokens on every protected request using Supabase's JWKS endpoint (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`), deriving `auth_user_id` and ensuring strict multi-tenant data isolation.
+3. **Local Dev Bypass**: `X-User-ID` is strictly ignored unless `ALLOW_DEV_AUTH_OVERRIDE=true` is set in local development. In production, this bypass is permanently disabled.
+
+To run the full test suite:
+```bash
+# Backend pytest suite (includes token verification and user isolation tests)
+python -m pytest
+
+# Frontend vitest suite (includes route protection and auth tests)
+cd frontend && npm test -- --run
 ```
 
 ---
 
 ## 📐 API Overview
 
-### Core & Profile
-- `GET /api/v1/health` — API health check
-- `GET /api/v1/meta` — Supported categories, slots, occasions, shapes, undertones
-- `GET /api/v1/profile` & `PUT /api/v1/profile` — User profile & preferences
-- `GET /api/v1/wardrobe` & `POST /api/v1/wardrobe` — Digital wardrobe items
+### Core & Account (Phase 4A)
+- `GET /api/v1/health` — API health check (Public)
+- `GET /api/v1/account/me` — Current authenticated user profile summary (Protected)
+- `DELETE /api/v1/account` — Permanently delete user account and all personal data (Protected)
+
+### Profile & Styling Attributes
+- `GET /api/v1/meta` — Supported categories, slots, occasions, shapes, undertones (Public)
+- `GET /api/v1/profile` & `PUT /api/v1/profile` — User style profile & preferences (Protected)
+- `GET /api/v1/profile/preferences` & `PUT /api/v1/profile/preferences` — Style preferences (Protected)
+
+### Wardrobe Management
+- `GET /api/v1/wardrobe` & `POST /api/v1/wardrobe` — Digital wardrobe items (Protected)
+- `GET /api/v1/wardrobe/<id>`, `PATCH /api/v1/wardrobe/<id>`, `DELETE /api/v1/wardrobe/<id>` — Item operations (Protected)
 
 ### Body Measurements (Phase 1.5)
-- `GET /api/v1/measurements` — Retrieve body measurements, ratios, derived body shape
-- `POST /api/v1/measurements` — Save/update body measurements (validates realistic ranges)
-- `DELETE /api/v1/measurements` — Permanently delete all body measurements
-- `PATCH /api/v1/measurements/shape-override` — Override derived body shape
+- `GET /api/v1/measurements` — Retrieve body measurements, ratios, derived body shape (Protected)
+- `POST /api/v1/measurements` — Save/update body measurements (Protected)
+- `DELETE /api/v1/measurements` — Permanently delete all body measurements (Protected)
+- `PATCH /api/v1/measurements/shape-override` — Override derived body shape (Protected)
 
-### Style Archetype Quiz (Phase 3A)
-- `GET /api/v1/style-quiz` — Retrieve versioned style scenario questions
+### Style Archetype Quiz (Phase 3)
+- `GET /api/v1/style-quiz` — Retrieve versioned style scenario questions (Public)
+- `POST /api/v1/style-quiz/answers` — Submit answers and calculate 5D archetype vector (Protected)
+- `GET /api/v1/style-quiz/result` & `DELETE /api/v1/style-quiz/result` — Quiz results (Protected)
+
+### Recommendations & Constraints
+- `POST /api/v1/recommendations` & `GET /api/v1/recommendations` — Outfits & history (Protected)
+- `POST /api/v1/recommendations/<id>/feedback` — Submit feedback on recommendation (Protected)
+- `GET /api/v1/constraints` & `POST /api/v1/constraints` — Saved outfit constraints (Protected)
+- `GET /api/v1/constraints/<id>` & `DELETE /api/v1/constraints/<id>` — Constraint operations (Protected)
 - `POST /api/v1/style-quiz` — Submit answers; returns 5D normalized vector and archetype
 - `GET /api/v1/style-quiz/result` — Retrieve latest style quiz result
 - `DELETE /api/v1/style-quiz/result` — Delete style quiz result

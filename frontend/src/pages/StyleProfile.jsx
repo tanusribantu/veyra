@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Sliders, Palette, User, Shield, Compass, Save, RefreshCw, Trash2 } from 'lucide-react'
+import { Sliders, Palette, User, Shield, Compass, Save, RefreshCw, Trash2, KeyRound, LogOut, AlertTriangle, X } from 'lucide-react'
 import { api } from '../services/api'
 import { useToast } from '../components/Toast'
+import { useAuth } from '../context/AuthContext'
 import StyleQuizModal, { StyleDimensionChart } from '../components/StyleQuizModal'
 import SkinDepthSelector from '../components/SkinDepthSelector'
 import SkinUndertoneSelector from '../components/SkinUndertoneSelector'
@@ -36,11 +37,26 @@ const COLOR_OPTIONS = [
 
 export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, measurementsMissing }) {
   const { addToast } = useToast()
+  let authContext = null
+  try {
+    authContext = useAuth()
+  } catch {
+    // outside provider in unit tests
+  }
+  const user = authContext?.user
+  const logout = authContext?.logout
+  const deleteAccount = authContext?.deleteAccount
+  const resetPassword = authContext?.resetPassword
+
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [measurementsData, setMeasurementsData] = useState(null)
   const [quizResult, setQuizResult] = useState(null)
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSendingReset, setIsSendingReset] = useState(false)
 
   const [profile, setProfile] = useState({
     name: '',
@@ -428,6 +444,91 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
               </div>
             )}
           </div>
+
+          {/* Account Security & Identity Card */}
+          <div className="account-security-card editorial-card">
+            <div className="card-top-icon">
+              <KeyRound size={22} className="shield-icon" />
+            </div>
+            <span className="eyebrow">ACCOUNT &amp; DATA SECURITY</span>
+            <h3>Atelier Identity &amp; Privacy</h3>
+
+            <div className="account-details-block" style={{ marginTop: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Authenticated As
+                </span>
+                <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                  {user?.email || 'Authenticated Atelier Member'}
+                </strong>
+                {user?.id && (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                    UID: {user.id}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  disabled={isSendingReset || !user?.email}
+                  onClick={async () => {
+                    if (!user?.email || !resetPassword) return
+                    setIsSendingReset(true)
+                    try {
+                      await resetPassword(user.email)
+                      addToast('Password reset link sent to your email', 'success')
+                    } catch (err) {
+                      addToast(err?.message || 'Failed to send reset link', 'error')
+                    } finally {
+                      setIsSendingReset(false)
+                    }
+                  }}
+                  className="btn-editorial-secondary"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.82rem' }}
+                >
+                  <KeyRound size={14} />
+                  <span>{isSendingReset ? 'Sending Link...' : 'Send Password Reset Email'}</span>
+                </button>
+
+                {logout && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout()
+                      addToast('Signed out of Atelier', 'info')
+                    }}
+                    className="btn-editorial-ghost"
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.82rem' }}
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
+                  </button>
+                )}
+
+                <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '0.5rem 0' }} />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmationText('')
+                    setIsDeleteModalOpen(true)
+                  }}
+                  className="btn-editorial-ghost"
+                  style={{
+                    width: '100%',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    fontSize: '0.8rem',
+                    padding: '0.65rem',
+                  }}
+                >
+                  <Trash2 size={14} style={{ marginRight: '6px' }} />
+                  <span>Delete My Account &amp; All Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -441,6 +542,96 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
           setIsQuizModalOpen(false)
         }}
       />
+
+      {/* Permanent Account Deletion Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="modal-backdrop animate-fade-in-up" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div className="modal-container editorial-modal" style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <div>
+                <span className="eyebrow" style={{ color: '#ef4444' }}>CRITICAL ACTION &bull; PERMANENT DATA REMOVAL</span>
+                <h2 className="modal-title" id="delete-account-title">Delete Account &amp; All Data</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="modal-close-btn"
+                aria-label="Close dialog"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ padding: '1rem 0' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  padding: '0.85rem',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <AlertTriangle size={20} style={{ color: '#ef4444', flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                  This action is <strong>irreversible</strong>. We will permanently delete your style profile, all wardrobe items, body measurements, style quiz vectors, outfit constraints, and historical recommendations.
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                To confirm permanent deletion, please type <strong>DELETE</strong> below:
+              </p>
+
+              <input
+                type="text"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="form-input"
+                style={{ width: '100%', padding: '0.65rem 0.75rem', marginBottom: '1.25rem' }}
+                disabled={isDeleting}
+              />
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  disabled={isDeleting}
+                  className="btn-editorial-ghost"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteConfirmationText.trim().toUpperCase() !== 'DELETE' || isDeleting}
+                  onClick={async () => {
+                    setIsDeleting(true)
+                    try {
+                      if (deleteAccount) {
+                        await deleteAccount()
+                      } else {
+                        await api.deleteAccount()
+                      }
+                      addToast('Your account and all associated data have been permanently deleted.', 'info')
+                      setIsDeleteModalOpen(false)
+                      window.location.hash = '#home'
+                    } catch (err) {
+                      addToast(err?.message || 'Failed to delete account', 'error')
+                    } finally {
+                      setIsDeleting(false)
+                    }
+                  }}
+                  className="btn-editorial-primary"
+                  style={{ background: '#ef4444', borderColor: '#ef4444', color: '#ffffff' }}
+                >
+                  <span>{isDeleting ? 'Deleting Everything...' : 'Permanently Delete Everything'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -8,16 +8,13 @@ from backend.app.schemas.measurements import (
 )
 from backend.app.schemas import format_validation_error
 from backend.app.services.measurements_service import MeasurementsService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("measurements", __name__)
 
 
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
-
-
 @bp.route("/measurements", methods=["GET"])
+@require_auth
 def get_user_measurements():
     """Retrieve current user's body measurements, ratios, and derived shape."""
     user_id = get_current_user_id()
@@ -35,6 +32,7 @@ def get_user_measurements():
 
 
 @bp.route("/measurements", methods=["POST"])
+@require_auth
 def save_user_measurements():
     """Save or update user body measurements with deterministic proportion classification."""
     user_id = get_current_user_id()
@@ -57,6 +55,7 @@ def save_user_measurements():
 
 
 @bp.route("/measurements", methods=["DELETE"])
+@require_auth
 def delete_user_measurements():
     """Permanently delete user body measurements for complete local privacy."""
     user_id = get_current_user_id()
@@ -74,6 +73,7 @@ def delete_user_measurements():
 
 
 @bp.route("/measurements/shape-override", methods=["PATCH"])
+@require_auth
 def override_body_shape():
     """Allow user to manually override or reset their derived body shape."""
     user_id = get_current_user_id()

@@ -2,16 +2,13 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 from backend.app.schemas import WardrobeCreateSchema, WardrobeUpdateSchema, format_validation_error
 from backend.app.services.wardrobe_service import WardrobeService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("wardrobe", __name__)
 
 
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
-
-
 @bp.route("/wardrobe", methods=["GET"])
+@require_auth
 def list_wardrobe():
     """List all garments belonging to current user."""
     user_id = get_current_user_id()
@@ -23,6 +20,7 @@ def list_wardrobe():
 
 
 @bp.route("/wardrobe", methods=["POST"])
+@require_auth
 def add_wardrobe_item():
     """Add a clothing item manually to the user's wardrobe."""
     user_id = get_current_user_id()
@@ -40,6 +38,7 @@ def add_wardrobe_item():
 
 
 @bp.route("/wardrobe/<string:item_id>", methods=["GET"])
+@require_auth
 def get_wardrobe_item(item_id: str):
     """Retrieve details of a single wardrobe item."""
     user_id = get_current_user_id()
@@ -50,6 +49,7 @@ def get_wardrobe_item(item_id: str):
 
 
 @bp.route("/wardrobe/<string:item_id>", methods=["PATCH"])
+@require_auth
 def update_wardrobe_item(item_id: str):
     """Update attributes of a single wardrobe item."""
     user_id = get_current_user_id()
@@ -70,6 +70,7 @@ def update_wardrobe_item(item_id: str):
 
 
 @bp.route("/wardrobe/<string:item_id>", methods=["DELETE"])
+@require_auth
 def delete_wardrobe_item(item_id: str):
     """Delete a clothing item from the user's wardrobe."""
     user_id = get_current_user_id()

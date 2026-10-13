@@ -2,16 +2,13 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 from backend.app.schemas import ProfileUpdateSchema, format_validation_error
 from backend.app.services.profile_service import ProfileService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("profile", __name__)
 
 
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
-
-
 @bp.route("/profile", methods=["GET"])
+@require_auth
 def get_profile():
     """Retrieve current user style profile."""
     user_id = get_current_user_id()
@@ -20,6 +17,7 @@ def get_profile():
 
 
 @bp.route("/profile", methods=["PUT"])
+@require_auth
 def update_profile():
     """Update current user style profile."""
     user_id = get_current_user_id()
@@ -35,6 +33,7 @@ def update_profile():
 
 
 @bp.route("/profile/preferences", methods=["GET"])
+@require_auth
 def get_preferences():
     """Read specific style preference settings."""
     user_id = get_current_user_id()
@@ -50,6 +49,7 @@ def get_preferences():
 
 
 @bp.route("/profile/preferences", methods=["PUT"])
+@require_auth
 def update_preferences():
     """Update specific style preference settings."""
     user_id = get_current_user_id()

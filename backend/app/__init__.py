@@ -13,6 +13,7 @@ from backend.app.routes import (
     measurements_bp,
     quiz_bp,
     constraints_bp,
+    account_bp,
 )
 
 
@@ -25,8 +26,9 @@ def create_app(config_name: str = None) -> Flask:
     config_cls = config_by_name.get(config_name, config_by_name["development"])
     app.config.from_object(config_cls)
 
-    # Initialize CORS
-    CORS(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}})
+    # Initialize CORS restricted to configured origins
+    origins = app.config.get("CORS_ORIGINS", ["http://localhost:5173", "http://localhost:3000"])
+    CORS(app, resources={r"/api/*": {"origins": origins}})
 
     # Initialize Database
     db.init_app(app)
@@ -40,6 +42,7 @@ def create_app(config_name: str = None) -> Flask:
     app.register_blueprint(measurements_bp, url_prefix=api_prefix)
     app.register_blueprint(quiz_bp, url_prefix=api_prefix)
     app.register_blueprint(constraints_bp, url_prefix=api_prefix)
+    app.register_blueprint(account_bp, url_prefix=api_prefix)
 
     # Global Error Handlers
     @app.errorhandler(400)
@@ -58,19 +61,9 @@ def create_app(config_name: str = None) -> Flask:
     def handle_internal_error(err):
         return jsonify({"error": "Internal server error", "message": "An unexpected error occurred."}), 500
 
-    # Create tables automatically in development / testing
-    with app.app_context():
-        db.create_all()
-        try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
-            if "recommendations" in inspector.get_table_names():
-                cols = [c["name"] for c in inspector.get_columns("recommendations")]
-                if "fit_notes" not in cols:
-                    with db.engine.connect() as conn:
-                        conn.execute(text("ALTER TABLE recommendations ADD COLUMN fit_notes JSON DEFAULT '[]'"))
-                        conn.commit()
-        except Exception:
-            pass
+    # In testing mode (in-memory SQLite), create tables directly for test execution speed
+    if app.config.get("TESTING"):
+        with app.app_context():
+            db.create_all()
 
     return app

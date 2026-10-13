@@ -5,6 +5,11 @@ Flask-SQLAlchemy>=3.1.0,<4.0.0
 SQLAlchemy>=2.0.0,<3.0.0
 pydantic>=2.6.0,<3.0.0
 python-dotenv>=1.0.0,<2.0.0
+PyJWT>=2.8.0,<3.0.0
+cryptography>=42.0.0
+requests>=2.31.0
+alembic>=1.13.0
+psycopg2-binary>=2.9.9
 
 # Testing & Dev
 pytest>=8.0.0

@@ -4,13 +4,9 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 from backend.app.schemas import QuizAnswerSubmitSchema, format_validation_error
 from backend.app.services.quiz_service import QuizService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("style_quiz", __name__)
-
-
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
 
 
 @bp.route("/style-quiz", methods=["GET"])
@@ -23,6 +19,7 @@ def get_quiz_questions():
 
 @bp.route("/style-quiz", methods=["POST"])
 @bp.route("/style-quiz/answers", methods=["POST"])
+@require_auth
 def submit_quiz_answers():
     """Scores quiz answers, determines normalized 5D style vector and archetype, and persists record."""
     user_id = get_current_user_id()
@@ -41,6 +38,7 @@ def submit_quiz_answers():
 
 @bp.route("/style-quiz/result", methods=["GET"])
 @bp.route("/style-quiz/results/latest", methods=["GET"])
+@require_auth
 def get_latest_quiz_result():
     """Retrieves the latest style quiz result for the current user."""
     user_id = get_current_user_id()
@@ -51,6 +49,7 @@ def get_latest_quiz_result():
 
 
 @bp.route("/style-quiz/result", methods=["DELETE"])
+@require_auth
 def delete_quiz_result():
     """Deletes style quiz results for the current user."""
     user_id = get_current_user_id()

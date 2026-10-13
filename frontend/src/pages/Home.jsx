@@ -35,7 +35,13 @@ const HERO_LOOKS = [
   },
 ]
 
-export default function Home({ onNavigate, onOpenMeasurements, measurementsMissing }) {
+export default function Home({
+  onNavigate,
+  onOpenMeasurements,
+  onOpenAuth,
+  isAuthenticated = true,
+  measurementsMissing,
+}) {
   const [activeLookIndex, setActiveLookIndex] = useState(0)
 
   useEffect(() => {
@@ -69,38 +75,89 @@ export default function Home({ onNavigate, onOpenMeasurements, measurementsMissi
             </p>
 
             <div className="hero-cta-group">
-              <button
-                type="button"
-                onClick={() => onNavigate('recommendations')}
-                className="btn-editorial-primary"
-              >
-                <span>Enter Styling Studio</span>
-                <ArrowRight size={16} />
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('recommendations')}
+                    className="btn-editorial-primary"
+                  >
+                    <span>Enter Styling Studio</span>
+                    <ArrowRight size={16} />
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => onNavigate('wardrobe')}
-                className="btn-editorial-secondary"
-              >
-                <span>Open Wardrobe</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('wardrobe')}
+                    className="btn-editorial-secondary"
+                  >
+                    <span>Open Wardrobe</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onOpenAuth && onOpenAuth('signup')}
+                    className="btn-editorial-primary"
+                  >
+                    <span>Create Account</span>
+                    <ArrowRight size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenAuth && onOpenAuth('login')}
+                    className="btn-editorial-secondary"
+                  >
+                    <span>Log In</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Sub-note on privacy & proportion calibration */}
             <div className="hero-privacy-note">
-              <button
-                type="button"
-                onClick={onOpenMeasurements}
-                className="privacy-trigger-link"
-              >
-                <SlidersHorizontal size={14} className="privacy-icon" />
-                <span>
-                  {measurementsMissing
-                    ? 'Proportions uncalibrated — Tap to configure geometric silhouette matching'
-                    : 'Proportions calibrated — Deterministic ratios active in styling engine'}
-                </span>
-              </button>
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={onOpenMeasurements}
+                  className="privacy-trigger-link"
+                >
+                  <SlidersHorizontal size={14} className="privacy-icon" />
+                  <span>
+                    {measurementsMissing
+                      ? 'Proportions uncalibrated — Tap to configure geometric silhouette matching'
+                      : 'Proportions calibrated — Deterministic ratios active in styling engine'}
+                  </span>
+                </button>
+              ) : (
+                <div
+                  className="editorial-privacy-callout"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.9rem',
+                    background: 'var(--surface-muted, rgba(0,0,0,0.02))',
+                    border: '1px solid var(--border-subtle)',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-muted)',
+                    lineHeight: '1.45',
+                    marginTop: '0.5rem',
+                  }}
+                >
+                  <Shield size={16} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--accent)' }} />
+                  <div>
+                    <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>
+                      Private &amp; Photo-Free
+                    </strong>
+                    <span>
+                      We store your wardrobe item details, style preferences, and proportion ratios. Photos and camera access are never required. Data is scoped strictly to your account.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -249,10 +306,17 @@ export default function Home({ onNavigate, onOpenMeasurements, measurementsMissi
           <div className="callout-actions">
             <button
               type="button"
-              onClick={() => onNavigate('recommendations')}
+              onClick={() => {
+                if (isAuthenticated) {
+                  onNavigate('recommendations')
+                } else if (onOpenAuth) {
+                  onOpenAuth('signup')
+                }
+              }}
               className="btn-editorial-primary"
             >
-              Generate Outfits Now
+              <span>{isAuthenticated ? 'Generate Outfits Now' : 'Join Veyra Atelier'}</span>
+              <ArrowRight size={16} />
             </button>
           </div>
         </div>

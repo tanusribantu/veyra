@@ -5,6 +5,7 @@ from backend.app.routes.recommendations import bp as recommendations_bp
 from backend.app.routes.measurements import bp as measurements_bp
 from backend.app.routes.quiz import bp as quiz_bp
 from backend.app.routes.constraints import bp as constraints_bp
+from backend.app.routes.account import bp as account_bp
 
 __all__ = [
     "health_bp",
@@ -14,4 +15,5 @@ __all__ = [
     "measurements_bp",
     "quiz_bp",
     "constraints_bp",
+    "account_bp",
 ]

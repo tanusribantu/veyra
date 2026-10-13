@@ -6,18 +6,24 @@ import Wardrobe from './pages/Wardrobe'
 import StyleProfile from './pages/StyleProfile'
 import MeasurementsModal from './components/MeasurementsModal'
 import OnboardingModal from './components/OnboardingModal'
+import AuthModal from './components/AuthModal'
 import { ToastProvider } from './components/Toast'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { api } from './services/api'
 import './App.css'
 
-function AppContent() {
+export function AppContent() {
+  const { isAuthenticated, isLoading, isFirstLogin, clearFirstLogin, logout } = useAuth()
+
   const [activeTab, setActiveTab] = useState(() => {
-    const hash = window.location.hash.replace('#', '')
+    const hash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''
     return ['home', 'recommendations', 'wardrobe', 'profile'].includes(hash) ? hash : 'home'
   })
 
   const [measurementsMissing, setMeasurementsMissing] = useState(true)
   const [isMeasurementsModalOpen, setIsMeasurementsModalOpen] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [authModalMode, setAuthModalMode] = useState('login')
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
     try {
       if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.getItem === 'function') {
@@ -29,21 +35,50 @@ function AppContent() {
     return false
   })
 
+  // Route protection: If unauthenticated, redirect any protected hash to home
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      if (activeTab !== 'home') {
+        setActiveTab('home')
+        if (typeof window !== 'undefined') {
+          window.location.hash = '#home'
+        }
+      }
+    }
+  }, [isAuthenticated, isLoading, activeTab])
+
+  // First-time login triggers onboarding modal
+  useEffect(() => {
+    if (isAuthenticated && isFirstLogin) {
+      setIsOnboardingOpen(true)
+      clearFirstLogin()
+    }
+  }, [isAuthenticated, isFirstLogin, clearFirstLogin])
+
   useEffect(() => {
     // Sync hash changes with navigation
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
       if (['home', 'recommendations', 'wardrobe', 'profile'].includes(hash)) {
+        if (!isAuthenticated && hash !== 'home') {
+          setAuthModalMode('login')
+          setIsAuthModalOpen(true)
+          window.location.hash = '#home'
+          setActiveTab('home')
+          return
+        }
         setActiveTab(hash)
       }
     }
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
-    checkMeasurementsStatus()
-  }, [])
+    if (isAuthenticated) {
+      checkMeasurementsStatus()
+    }
+  }, [isAuthenticated])
 
   const checkMeasurementsStatus = async () => {
     try {
@@ -55,9 +90,32 @@ function AppContent() {
   }
 
   const handleNavigate = (tabId) => {
+    if (!isAuthenticated && tabId !== 'home') {
+      setAuthModalMode('login')
+      setIsAuthModalOpen(true)
+      return
+    }
     setActiveTab(tabId)
     window.location.hash = `#${tabId}`
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleOpenAuth = (mode = 'login') => {
+    setAuthModalMode(mode)
+    setIsAuthModalOpen(true)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <span className="wordmark" style={{ fontSize: '2rem' }}>VEYRA</span>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', letterSpacing: '0.1em', marginTop: '0.5rem' }}>
+            CALIBRATING ATELIER...
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -67,29 +125,36 @@ function AppContent() {
         onNavigate={handleNavigate}
         measurementsMissing={measurementsMissing}
         onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={handleOpenAuth}
+        onLogout={logout}
       />
 
       <main className="main-content">
-        {activeTab === 'home' && (
+        {/* Unauthenticated users only see the landing page */}
+        {(!isAuthenticated || activeTab === 'home') && (
           <Home
             onNavigate={handleNavigate}
             onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
             onOpenOnboarding={() => setIsOnboardingOpen(true)}
+            onOpenAuth={handleOpenAuth}
+            isAuthenticated={isAuthenticated}
             measurementsMissing={measurementsMissing}
           />
         )}
 
-        {activeTab === 'recommendations' && (
+        {/* Protected routes accessible only when authenticated */}
+        {isAuthenticated && activeTab === 'recommendations' && (
           <Recommendations
             onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
           />
         )}
 
-        {activeTab === 'wardrobe' && (
+        {isAuthenticated && activeTab === 'wardrobe' && (
           <Wardrobe />
         )}
 
-        {activeTab === 'profile' && (
+        {isAuthenticated && activeTab === 'profile' && (
           <StyleProfile
             onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
             onOpenOnboarding={() => setIsOnboardingOpen(true)}
@@ -97,6 +162,19 @@ function AppContent() {
           />
         )}
       </main>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialMode={authModalMode}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(mode) => {
+          checkMeasurementsStatus()
+          if (mode === 'signup') {
+            setIsOnboardingOpen(true)
+          }
+        }}
+      />
 
       {/* Measurements Intelligence Modal */}
       <MeasurementsModal
@@ -139,12 +217,21 @@ function AppContent() {
             <button type="button" onClick={() => handleNavigate('profile')} className="footer-link">
               Atelier Profile
             </button>
-            <button type="button" onClick={() => setIsOnboardingOpen(true)} className="footer-link">
-              Onboarding Atelier
-            </button>
-            <button type="button" onClick={() => setIsMeasurementsModalOpen(true)} className="footer-link">
-              Proportion Privacy
-            </button>
+            {isAuthenticated && (
+              <>
+                <button type="button" onClick={() => setIsOnboardingOpen(true)} className="footer-link">
+                  Onboarding Atelier
+                </button>
+                <button type="button" onClick={() => setIsMeasurementsModalOpen(true)} className="footer-link">
+                  Proportion Privacy
+                </button>
+              </>
+            )}
+            {!isAuthenticated && (
+              <button type="button" onClick={() => handleOpenAuth('signup')} className="footer-link">
+                Join Atelier
+              </button>
+            )}
           </nav>
         </div>
 
@@ -160,7 +247,9 @@ function AppContent() {
 export default function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ToastProvider>
   )
 }

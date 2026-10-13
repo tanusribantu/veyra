@@ -5,9 +5,22 @@
 
 const API_BASE = '/api/v1'
 
-const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-  'X-User-ID': 'user_001',
+let currentAccessToken = null
+
+export function setAccessToken(token) {
+  currentAccessToken = token
+}
+
+export function getAuthHeaders() {
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  if (currentAccessToken) {
+    headers['Authorization'] = `Bearer ${currentAccessToken}`
+  } else {
+    headers['X-User-ID'] = 'user_001'
+  }
+  return headers
 }
 
 async function handleResponse(response) {
@@ -23,8 +36,10 @@ async function handleResponse(response) {
           return `Please check the ${readableField} field`
         })
         errorDetail = friendlyMsgs.join('. ')
-      } else {
-        errorDetail = errorJson.error || errorJson.message || JSON.stringify(errorJson)
+      } else if (errorJson.message) {
+        errorDetail = errorJson.message
+      } else if (errorJson.error) {
+        errorDetail = errorJson.error
       }
     } catch {
       // response wasn't JSON
@@ -41,33 +56,41 @@ export const api = {
   getHealth: () => fetch(`${API_BASE}/health`).then(handleResponse),
   getMetadata: () => fetch(`${API_BASE}/meta`).then(handleResponse),
 
+  // Account & Identity (Phase 4A)
+  getCurrentAccount: () => fetch(`${API_BASE}/account/me`, { headers: getAuthHeaders() }).then(handleResponse),
+  deleteAccount: () =>
+    fetch(`${API_BASE}/account`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse),
+
   // Wardrobe Items
   getWardrobe: (params = {}) => {
     const query = new URLSearchParams()
     if (params.slot) query.append('slot', params.slot)
     if (params.category) query.append('category', params.category)
     const qs = query.toString() ? `?${query.toString()}` : ''
-    return fetch(`${API_BASE}/wardrobe${qs}`, { headers: DEFAULT_HEADERS }).then(handleResponse)
+    return fetch(`${API_BASE}/wardrobe${qs}`, { headers: getAuthHeaders() }).then(handleResponse)
   },
 
   createWardrobeItem: (itemData) =>
     fetch(`${API_BASE}/wardrobe`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(itemData),
     }).then(handleResponse),
 
   updateWardrobeItem: (itemId, updates) =>
     fetch(`${API_BASE}/wardrobe/${itemId}`, {
       method: 'PATCH',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(updates),
     }).then(handleResponse),
 
   deleteWardrobeItem: (itemId) =>
     fetch(`${API_BASE}/wardrobe/${itemId}`, {
       method: 'DELETE',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
     }).then(handleResponse),
 
   // Recommendations & Feedback
@@ -84,18 +107,18 @@ export const api = {
     }
     return fetch(`${API_BASE}/recommendations`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     }).then(handleResponse)
   },
 
   getRecommendationHistory: (limit = 10) =>
-    fetch(`${API_BASE}/recommendations?limit=${limit}`, { headers: DEFAULT_HEADERS }).then(handleResponse),
+    fetch(`${API_BASE}/recommendations?limit=${limit}`, { headers: getAuthHeaders() }).then(handleResponse),
 
   submitFeedback: (recommendationId, { feedbackType, reason = '' }) =>
     fetch(`${API_BASE}/recommendations/${recommendationId}/feedback`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         feedback_type: feedbackType,
         reason,
@@ -103,21 +126,21 @@ export const api = {
     }).then(handleResponse),
 
   // Style Archetype Quiz (Phase 3)
-  getQuizQuestions: () => fetch(`${API_BASE}/style-quiz`, { headers: DEFAULT_HEADERS }).then(handleResponse),
+  getQuizQuestions: () => fetch(`${API_BASE}/style-quiz`).then(handleResponse),
 
   submitQuizAnswers: (answers) =>
     fetch(`${API_BASE}/style-quiz`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify({ answers }),
     }).then(handleResponse),
 
-  getLatestQuizResult: () => fetch(`${API_BASE}/style-quiz/result`, { headers: DEFAULT_HEADERS }).then(handleResponse),
+  getLatestQuizResult: () => fetch(`${API_BASE}/style-quiz/result`, { headers: getAuthHeaders() }).then(handleResponse),
 
   deleteQuizResult: () =>
     fetch(`${API_BASE}/style-quiz/result`, {
       method: 'DELETE',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
     }).then(handleResponse),
 
   // Constraints (Phase 3)
@@ -127,55 +150,55 @@ export const api = {
       query.append('is_saved_default', params.is_saved_default)
     }
     const qs = query.toString() ? `?${query.toString()}` : ''
-    return fetch(`${API_BASE}/constraints${qs}`, { headers: DEFAULT_HEADERS }).then(handleResponse)
+    return fetch(`${API_BASE}/constraints${qs}`, { headers: getAuthHeaders() }).then(handleResponse)
   },
 
   saveConstraint: (constraintData) =>
     fetch(`${API_BASE}/constraints`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(constraintData),
     }).then(handleResponse),
 
   deleteConstraint: (constraintId) =>
     fetch(`${API_BASE}/constraints/${constraintId}`, {
       method: 'DELETE',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
     }).then(handleResponse),
 
   // Style Profile
-  getProfile: () => fetch(`${API_BASE}/profile`, { headers: DEFAULT_HEADERS }).then(handleResponse),
+  getProfile: () => fetch(`${API_BASE}/profile`, { headers: getAuthHeaders() }).then(handleResponse),
 
   updateProfile: (profileData) =>
     fetch(`${API_BASE}/profile`, {
       method: 'PUT',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(profileData),
     }).then(handleResponse),
 
   // Measurements & Body Intelligence (Phase 1.5)
   getMeasurements: (unit = null) => {
     const qs = unit ? `?unit=${unit}` : ''
-    return fetch(`${API_BASE}/measurements${qs}`, { headers: DEFAULT_HEADERS }).then(handleResponse)
+    return fetch(`${API_BASE}/measurements${qs}`, { headers: getAuthHeaders() }).then(handleResponse)
   },
 
   saveMeasurements: (measurementData) =>
     fetch(`${API_BASE}/measurements`, {
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify(measurementData),
     }).then(handleResponse),
 
   deleteMeasurements: () =>
     fetch(`${API_BASE}/measurements`, {
       method: 'DELETE',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
     }).then(handleResponse),
 
   overrideBodyShape: (customBodyShape = null) =>
     fetch(`${API_BASE}/measurements/shape-override`, {
       method: 'PATCH',
-      headers: DEFAULT_HEADERS,
+      headers: getAuthHeaders(),
       body: JSON.stringify({ custom_body_shape: customBodyShape }),
     }).then(handleResponse),
 }

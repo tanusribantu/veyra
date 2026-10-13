@@ -8,17 +8,14 @@ from backend.app.schemas import (
     format_validation_error,
 )
 from backend.app.services.recommendation_service import RecommendationService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("recommendations", __name__)
 recommendation_service = RecommendationService()
 
 
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
-
-
 @bp.route("/recommendations", methods=["POST"])
+@require_auth
 def create_recommendations():
     """Generate, rank, and explain outfit recommendations for a requested occasion."""
     user_id = get_current_user_id()
@@ -54,6 +51,7 @@ def create_recommendations():
 
 
 @bp.route("/recommendations", methods=["GET"])
+@require_auth
 def list_recommendations():
     """Retrieve historical recommendations for the user."""
     user_id = get_current_user_id()
@@ -63,6 +61,7 @@ def list_recommendations():
 
 
 @bp.route("/recommendations/<string:recommendation_id>", methods=["GET"])
+@require_auth
 def get_recommendation_detail(recommendation_id: str):
     """Retrieve a specific recommendation by ID."""
     user_id = get_current_user_id()
@@ -73,6 +72,7 @@ def get_recommendation_detail(recommendation_id: str):
 
 
 @bp.route("/recommendations/<string:recommendation_id>/feedback", methods=["POST"])
+@require_auth
 def submit_recommendation_feedback(recommendation_id: str):
     """Submit user reaction (like, dislike, skip, worn) on a recommendation."""
     user_id = get_current_user_id()

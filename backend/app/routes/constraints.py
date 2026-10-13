@@ -4,16 +4,13 @@ from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 from backend.app.schemas import ConstraintCreateSchema, format_validation_error
 from backend.app.services.constraint_service import ConstraintService
+from backend.app.auth import require_auth, get_current_user_id
 
 bp = Blueprint("constraints", __name__)
 
 
-def get_current_user_id() -> str:
-    """Extract user identifier from headers or default to prototype user."""
-    return request.headers.get("X-User-ID", "user_001")
-
-
 @bp.route("/constraints", methods=["POST"])
+@require_auth
 def create_constraint():
     """Saves a must_include or avoid constraint rule for the user."""
     user_id = get_current_user_id()
@@ -38,6 +35,7 @@ def create_constraint():
 
 
 @bp.route("/constraints", methods=["GET"])
+@require_auth
 def list_constraints():
     """Lists saved constraints for the user, with optional filter by default status."""
     user_id = get_current_user_id()
@@ -50,7 +48,19 @@ def list_constraints():
     return jsonify({"constraints": records}), 200
 
 
+@bp.route("/constraints/<string:constraint_id>", methods=["GET"])
+@require_auth
+def get_constraint(constraint_id: str):
+    """Retrieves a single saved constraint by ID."""
+    user_id = get_current_user_id()
+    record = ConstraintService.get_constraint(user_id=user_id, constraint_id=constraint_id)
+    if not record:
+        return jsonify({"error": f"Constraint '{constraint_id}' not found"}), 404
+    return jsonify(record), 200
+
+
 @bp.route("/constraints/<string:constraint_id>", methods=["DELETE"])
+@require_auth
 def delete_constraint(constraint_id: str):
     """Deletes a saved constraint by ID."""
     user_id = get_current_user_id()
