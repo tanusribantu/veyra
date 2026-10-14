@@ -31,6 +31,25 @@ describe('WardrobeItemModal Component', () => {
     expect(screen.getByLabelText(/Accessory Type/i)).toBeInTheDocument()
   })
 
+  it('provides lane-aware suggestions while letting any user select any garment', () => {
+    render(
+      <ToastProvider>
+        <WardrobeItemModal isOpen={true} onClose={() => {}} stylingLane="menswear" />
+      </ToastProvider>
+    )
+
+    // Even in menswear lane, inclusive items like Kurta, Saree, Dress, and Skirt are present and selectable
+    expect(screen.getByRole('button', { name: /Kurta \/ Bandhgala/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Dress \/ Gown/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Saree \/ Draped Garment/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Skirt \/ Maxi/i })).toBeInTheDocument()
+
+    // Can click Saree in menswear lane without error
+    const sareeBtn = screen.getByRole('button', { name: /Saree \/ Draped Garment/i })
+    fireEvent.click(sareeBtn)
+    expect(sareeBtn.className).toContain('active')
+  })
+
   it('submits form with all attributes to api.createWardrobeItem', async () => {
     api.createWardrobeItem.mockResolvedValue({ id: 'item_999' })
     const handleSaved = vi.fn()

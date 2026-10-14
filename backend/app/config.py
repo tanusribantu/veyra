@@ -30,7 +30,16 @@ class Config:
     # Supabase Configuration
     SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
     SUPABASE_PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY", "")
-    SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
+    SUPABASE_SECRET_KEY = (
+        os.getenv("SUPABASE_SECRET_KEY")
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or ""
+    )
+    SUPABASE_SERVICE_ROLE_KEY = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("SUPABASE_SECRET_KEY")
+        or ""
+    )
     ALLOW_DEV_AUTH_OVERRIDE = False
 
 

@@ -21,6 +21,7 @@ class StyleProfile(db.Model):
     skin_depth = db.Column(db.String(32), default="prefer_not_to_say")      # light, medium, deep, prefer_not_to_say
     face_shape = db.Column(db.String(32), default="prefer_not_to_say")      # oval, round, square, heart, oblong, prefer_not_to_say
     body_shape_override = db.Column(db.String(32), nullable=True)           # user override if desired
+    styling_lane = db.Column(db.String(32), nullable=True)                  # menswear, womenswear, mixed, prefer_not_to_say
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
@@ -43,6 +44,7 @@ class StyleProfile(db.Model):
             "skin_depth": self.skin_depth or "prefer_not_to_say",
             "face_shape": self.face_shape or "prefer_not_to_say",
             "body_shape_override": self.body_shape_override,
+            "styling_lane": self.styling_lane or "prefer_not_to_say",
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

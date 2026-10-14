@@ -12,8 +12,9 @@ bp = Blueprint("style_quiz", __name__)
 @bp.route("/style-quiz", methods=["GET"])
 @bp.route("/style-quiz/questions", methods=["GET"])
 def get_quiz_questions():
-    """Returns the 10 versioned scenario questions for the style archetype quiz."""
-    data = QuizService.get_quiz_questions()
+    """Returns the versioned scenario questions for the style archetype quiz."""
+    lane = request.args.get("lane")
+    data = QuizService.get_quiz_questions(lane=lane)
     return jsonify(data), 200
 
 

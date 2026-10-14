@@ -55,6 +55,7 @@ class ProfileService:
             "skin_depth",
             "face_shape",
             "body_shape_override",
+            "styling_lane",
         ]:
             if field in updates and updates[field] is not None:
                 setattr(profile, field, updates[field])

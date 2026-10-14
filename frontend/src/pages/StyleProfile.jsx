@@ -8,6 +8,7 @@ import SkinDepthSelector from '../components/SkinDepthSelector'
 import SkinUndertoneSelector from '../components/SkinUndertoneSelector'
 import FaceShapeSelector from '../components/FaceShapeSelector'
 import BodyShapeSelector from '../components/BodyShapeSelector'
+import { STYLING_LANE_OPTIONS, FLUID_STYLE_TENDENCIES } from '../config/profileConfig'
 
 const STYLE_OPTIONS = [
   { id: 'minimal', label: 'Minimalist' },
@@ -60,6 +61,8 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
 
   const [profile, setProfile] = useState({
     name: '',
+    styling_lane: 'mixed',
+    style_tendency: 'mix_of_everything',
     preferred_styles: ['minimal', 'casual'],
     favorite_colors: ['navy', 'white', 'charcoal'],
     avoided_colors: [],
@@ -83,6 +86,7 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
         setProfile((prev) => ({
           ...prev,
           name: p.name || prev.name,
+          styling_lane: p.styling_lane || prev.styling_lane || 'mixed',
           preferred_styles: p.preferred_styles || prev.preferred_styles,
           favorite_colors: p.favorite_colors || prev.favorite_colors,
           avoided_colors: p.avoided_colors || prev.avoided_colors,
@@ -203,6 +207,55 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
       <div className="profile-content-grid">
         {/* Main Column: Style & Color Preferences */}
         <div className="profile-main-col">
+          {/* Wardrobe Department & Tailoring Lane */}
+          <section className="profile-section editorial-card">
+            <div className="section-title-row">
+              <Compass size={18} className="section-icon" />
+              <h3>Wardrobe Department &amp; Tailoring Lane</h3>
+            </div>
+            <p className="section-desc">
+              Which section do you usually shop from? Informs garment terminology and silhouette suggestions without restricting what you may explore.
+            </p>
+
+            <div className="chip-group" style={{ marginTop: '1rem' }}>
+              {STYLING_LANE_OPTIONS.map((lane) => (
+                <button
+                  key={lane.id}
+                  type="button"
+                  className={`chip-editorial ${profile.styling_lane === lane.id ? 'active' : ''}`}
+                  onClick={() => setProfile({ ...profile, styling_lane: lane.id })}
+                >
+                  {lane.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: '1.25rem' }}>
+              <span className="eyebrow" style={{ fontSize: '0.68rem', display: 'block', marginBottom: '8px' }}>
+                Closest to My Style (Silhouette Tendency)
+              </span>
+              <div className="chip-group">
+                {FLUID_STYLE_TENDENCIES.map((tendency) => (
+                  <button
+                    key={tendency.id}
+                    type="button"
+                    className={`chip-editorial ${profile.style_tendency === tendency.id ? 'active' : ''}`}
+                    onClick={() => {
+                      let newFit = profile.fit_preference
+                      if (tendency.id === 'structured_sharp') newFit = 'slim'
+                      else if (tendency.id === 'relaxed_oversized') newFit = 'oversized'
+                      else if (tendency.id === 'soft_flowing') newFit = 'relaxed'
+                      else if (tendency.id === 'mix_of_everything') newFit = 'regular'
+                      setProfile({ ...profile, style_tendency: tendency.id, fit_preference: newFit })
+                    }}
+                  >
+                    {tendency.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* Aesthetic Philosophy */}
           <section className="profile-section editorial-card">
             <div className="section-title-row">
@@ -315,6 +368,7 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
               <BodyShapeSelector
                 value={profile.body_shape_override}
                 onChange={(val) => setProfile({ ...profile, body_shape_override: val })}
+                stylingLane={profile.styling_lane}
                 onOpenTapeMeasurements={onOpenMeasurements}
               />
             </div>
@@ -537,6 +591,7 @@ export default function StyleProfile({ onOpenMeasurements, onOpenOnboarding, mea
         isOpen={isQuizModalOpen}
         onClose={() => setIsQuizModalOpen(false)}
         initialResult={quizResult}
+        stylingLane={profile.styling_lane}
         onComplete={(res) => {
           setQuizResult(res)
           setIsQuizModalOpen(false)

@@ -37,10 +37,14 @@ class BodyMeasurements(db.Model):
         """Returns custom override if set, else mathematically derived shape."""
         return self.custom_body_shape or self.derived_body_shape or "rectangle"
 
-    def to_dict(self, unit: str = None) -> dict:
+    def to_dict(self, unit: str = None, lane: str = None) -> dict:
         """Serializes measurements, converting to preferred display unit if requested."""
         display_unit = unit or self.preferred_unit or "cm"
         scale = 1.0 if display_unit == "cm" else (1.0 / 2.54)
+        shape = self.effective_body_shape()
+
+        from backend.app.recommendation.body_labels import get_body_shape_label
+        display_label = get_body_shape_label(shape, lane=lane)
 
         return {
             "id": self.id,
@@ -60,7 +64,8 @@ class BodyMeasurements(db.Model):
             },
             "derived_body_shape": self.derived_body_shape,
             "custom_body_shape": self.custom_body_shape,
-            "effective_body_shape": self.effective_body_shape(),
+            "effective_body_shape": shape,
+            "display_shape_label": display_label,
             "ratios": self.ratios or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

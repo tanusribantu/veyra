@@ -10,6 +10,7 @@ from backend.app.recommendation.quiz_config import (
     STYLE_QUIZ_QUESTIONS,
     STYLE_ARCHETYPES,
     compute_quiz_vector,
+    get_adapted_quiz_questions,
 )
 
 
@@ -17,11 +18,12 @@ class QuizService:
     """Orchestrates quiz question retrieval, answer scoring, archetype resolution, and persistence."""
 
     @classmethod
-    def get_quiz_questions(cls) -> Dict[str, Any]:
+    def get_quiz_questions(cls, lane: Optional[str] = None) -> Dict[str, Any]:
         """Returns the versioned scenario questions for the style archetype quiz."""
+        questions_source = get_adapted_quiz_questions(lane)
         # Strip internal raw point values from user-facing question options
         sanitized_questions = []
-        for q in STYLE_QUIZ_QUESTIONS:
+        for q in questions_source:
             sanitized_options = [
                 {
                     "id": opt["id"],

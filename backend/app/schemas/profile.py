@@ -1,5 +1,7 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+ALLOWED_STYLING_LANES = {"menswear", "womenswear", "mixed", "prefer_not_to_say"}
 
 
 class ProfileUpdateSchema(BaseModel):
@@ -18,3 +20,19 @@ class ProfileUpdateSchema(BaseModel):
     skin_depth: Optional[str] = None
     face_shape: Optional[str] = None
     body_shape_override: Optional[str] = None
+    styling_lane: Optional[str] = None
+
+    @field_validator("styling_lane")
+    @classmethod
+    def validate_styling_lane(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v_clean = v.strip().lower()
+        if not v_clean:
+            return None
+        if v_clean not in ALLOWED_STYLING_LANES:
+            raise ValueError(
+                f"Invalid styling_lane '{v}'. Must be one of: {sorted(list(ALLOWED_STYLING_LANES))}"
+            )
+        return v_clean
+

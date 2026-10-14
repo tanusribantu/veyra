@@ -126,7 +126,10 @@ export const api = {
     }).then(handleResponse),
 
   // Style Archetype Quiz (Phase 3)
-  getQuizQuestions: () => fetch(`${API_BASE}/style-quiz`).then(handleResponse),
+  getQuizQuestions: (lane = null) => {
+    const qs = lane ? `?lane=${encodeURIComponent(lane)}` : ''
+    return fetch(`${API_BASE}/style-quiz${qs}`, { headers: getAuthHeaders() }).then(handleResponse)
+  },
 
   submitQuizAnswers: (answers) =>
     fetch(`${API_BASE}/style-quiz`, {

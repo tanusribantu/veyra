@@ -18,12 +18,16 @@ class MeasurementsService:
         record = BodyMeasurements.query.filter_by(user_id=user_id).first()
         if not record:
             return None
-        return record.to_dict(unit=unit)
+        profile = ProfileService.get_or_create_profile(user_id=user_id)
+        lane = profile.styling_lane if profile else None
+        return record.to_dict(unit=unit, lane=lane)
 
     @classmethod
     def save_measurements(cls, user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Save or update user body measurements with deterministic classification."""
         ProfileService.get_or_create_user(user_id)
+        profile = ProfileService.get_or_create_profile(user_id=user_id)
+        lane = profile.styling_lane if profile else None
 
         h_cm = data["height_cm"]
         s_cm = data["shoulder_cm"]
@@ -40,6 +44,7 @@ class MeasurementsService:
             waist_cm=w_cm,
             hips_cm=hip_cm,
             custom_override=custom_shape,
+            lane=lane,
         )
 
         record = BodyMeasurements.query.filter_by(user_id=user_id).first()
@@ -71,7 +76,7 @@ class MeasurementsService:
             record.updated_at = datetime.now(timezone.utc)
 
         db.session.commit()
-        result = record.to_dict(unit=pref_unit)
+        result = record.to_dict(unit=pref_unit, lane=lane)
         result["classification_explanation"] = analysis["explanation"]
         return result
 

@@ -9,6 +9,11 @@ CATEGORY_TO_SLOT = {
     "sweater": "top",
     "overshirt": "top",
     "jacket": "top",
+    "kurta": "top",
+    "kurti": "top",
+    "blouse": "top",
+    "dress": "top",
+    "saree": "top",
 
     # Bottoms
     "trousers": "bottom",
@@ -16,6 +21,7 @@ CATEGORY_TO_SLOT = {
     "chinos": "bottom",
     "shorts": "bottom",
     "pants": "bottom",
+    "skirt": "bottom",
 
     # Footwear
     "sneakers": "footwear",

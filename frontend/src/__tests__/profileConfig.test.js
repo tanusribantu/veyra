@@ -4,6 +4,10 @@ import {
   UNDERTONE_OPTIONS,
   FACE_SHAPE_OPTIONS,
   BODY_SHAPE_OPTIONS,
+  STYLING_LANE_OPTIONS,
+  FLUID_STYLE_TENDENCIES,
+  getBodyShapeOptions,
+  getBodyShapeLabel,
   deriveUndertone,
   deriveFaceShape,
   deriveBodyShapeFromFit,
@@ -24,6 +28,56 @@ describe('profileConfig Mappings and Derivation Rules', () => {
     expect(UNDERTONE_OPTIONS.length).toBeGreaterThanOrEqual(3)
     expect(FACE_SHAPE_OPTIONS.length).toBe(6)
     expect(BODY_SHAPE_OPTIONS.length).toBe(6)
+  })
+
+  describe('STYLING_LANE_OPTIONS & Inclusive Configurations', () => {
+    it('defines exactly 4 options with "A mix of both" third as an equal option', () => {
+      expect(STYLING_LANE_OPTIONS.length).toBe(4)
+      expect(STYLING_LANE_OPTIONS.map((o) => o.id)).toEqual([
+        'menswear',
+        'womenswear',
+        'mixed',
+        'prefer_not_to_say',
+      ])
+      expect(STYLING_LANE_OPTIONS[2].label).toBe('A mix of both')
+    })
+
+    it('never uses the word "gender" anywhere in labels or descriptions', () => {
+      STYLING_LANE_OPTIONS.forEach((opt) => {
+        expect(opt.label.toLowerCase()).not.toContain('gender')
+        expect(opt.desc.toLowerCase()).not.toContain('gender')
+      })
+    })
+
+    it('contains neutral fluid style tendencies', () => {
+      expect(FLUID_STYLE_TENDENCIES.length).toBe(4)
+      const labels = FLUID_STYLE_TENDENCIES.map((t) => t.label.toLowerCase())
+      expect(labels).toContain('structured and sharp')
+      expect(labels).toContain('relaxed and oversized')
+      expect(labels).toContain('soft and flowing')
+      expect(labels).toContain('mix of everything')
+    })
+
+    it('returns neutral body shape display labels for menswear, mixed, and unspecified lanes', () => {
+      // Inverted triangle should be "Broad Shoulders, Tapered Waist"
+      expect(getBodyShapeLabel('inverted_triangle', 'menswear')).toBe('Broad Shoulders, Tapered Waist')
+      expect(getBodyShapeLabel('inverted_triangle', 'mixed')).toBe('Broad Shoulders, Tapered Waist')
+      expect(getBodyShapeLabel('inverted_triangle', 'prefer_not_to_say')).toBe('Broad Shoulders, Tapered Waist')
+      expect(getBodyShapeLabel('inverted_triangle', null)).toBe('Broad Shoulders, Tapered Waist')
+
+      // Hourglass should be "Balanced Frame, Defined Waist"
+      expect(getBodyShapeLabel('hourglass', 'menswear')).toBe('Balanced Frame, Defined Waist')
+      expect(getBodyShapeLabel('hourglass', 'mixed')).toBe('Balanced Frame, Defined Waist')
+
+      // Pear should be "Broader Base, Streamlined Torso"
+      expect(getBodyShapeLabel('pear', 'menswear')).toBe('Broader Base, Streamlined Torso')
+    })
+
+    it('returns classic labels for womenswear lane', () => {
+      expect(getBodyShapeLabel('hourglass', 'womenswear')).toBe('Hourglass')
+      expect(getBodyShapeLabel('pear', 'womenswear')).toBe('Pear / Triangle')
+      expect(getBodyShapeLabel('inverted_triangle', 'womenswear')).toBe('Inverted Triangle')
+    })
   })
 
   describe('deriveUndertone', () => {

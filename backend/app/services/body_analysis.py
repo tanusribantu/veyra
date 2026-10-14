@@ -10,10 +10,25 @@ from backend.app.recommendation.scoring_config import (
     BODY_SHAPE_THRESHOLDS,
     SUPPORTED_BODY_SHAPES,
 )
+from backend.app.recommendation.body_labels import (
+    get_body_shape_display_info,
+    get_body_shape_label,
+    BODY_SHAPE_DISPLAY_LABELS,
+)
 
 
 class BodyAnalysisService:
     """Calculates anthropometric ratios and classifies body proportion shapes."""
+
+    @classmethod
+    def get_display_label(cls, shape: str, lane: Optional[str] = None) -> str:
+        """Retrieves the display label for a body shape based on styling lane."""
+        return get_body_shape_label(shape, lane=lane)
+
+    @classmethod
+    def get_display_info(cls, shape: str, lane: Optional[str] = None) -> Dict[str, str]:
+        """Retrieves the display label and description for a body shape based on styling lane."""
+        return get_body_shape_display_info(shape, lane=lane)
 
     @staticmethod
     def calculate_ratios(
@@ -41,6 +56,7 @@ class BodyAnalysisService:
         waist_cm: float,
         hips_cm: float,
         custom_override: Optional[str] = None,
+        lane: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Derives body shape deterministically from measurement ratios.
 
@@ -142,9 +158,13 @@ class BodyAnalysisService:
                 is_overridden = True
                 explanation += f" (Custom override selected: {clean_override})."
 
+        display_info = get_body_shape_display_info(effective_shape, lane=lane)
+
         return {
             "derived_shape": derived_shape,
             "effective_shape": effective_shape,
+            "display_shape_label": display_info["label"],
+            "display_shape_desc": display_info["description"],
             "is_overridden": is_overridden,
             "ratios": ratios,
             "explanation": explanation,

@@ -7,6 +7,7 @@ import SkinDepthSelector from './SkinDepthSelector'
 import SkinUndertoneSelector from './SkinUndertoneSelector'
 import FaceShapeSelector from './FaceShapeSelector'
 import BodyShapeSelector from './BodyShapeSelector'
+import { STYLING_LANE_OPTIONS, FLUID_STYLE_TENDENCIES } from '../config/profileConfig'
 
 const STYLE_OPTIONS = [
   { id: 'minimal', label: 'Minimalist' },
@@ -136,31 +137,35 @@ const DEFAULT_QUIZ_SCENARIOS = [
 
 export default function OnboardingModal({ isOpen, onClose, onComplete }) {
   const { addToast } = useToast()
-  const [step, setStep] = useState(1) // 1: Profile & Colors & Fit, 2: Style Quiz, 3: Complexion, 4: Measurements
+  const [step, setStep] = useState(1) // 1: Styling Lane, 2: Foundations, 3: Style Quiz, 4: Complexion, 5: Measurements
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Step 1: Identity, Style & Colors
+  // Step 1: Styling Lane Question ("Which section do you usually shop from?")
+  const [stylingLane, setStylingLane] = useState('mixed')
+
+  // Step 2: Identity, Style & Colors
   const [name, setName] = useState('')
   const [preferredStyles, setPreferredStyles] = useState(['minimal', 'casual'])
+  const [styleTendency, setStyleTendency] = useState('mix_of_everything')
   const [favoriteColors, setFavoriteColors] = useState(['navy', 'white', 'charcoal'])
   const [avoidedColors, setAvoidedColors] = useState([])
   const [fitPreference, setFitPreference] = useState('regular')
   const [formalityPreference, setFormalityPreference] = useState(3)
 
-  // Step 2: Style Archetype Quiz
+  // Step 3: Style Archetype Quiz
   const [quizQuestions, setQuizQuestions] = useState(DEFAULT_QUIZ_SCENARIOS)
   const [quizIndex, setQuizIndex] = useState(0)
   const [quizAnswers, setQuizAnswers] = useState({})
   const [quizResult, setQuizResult] = useState(null)
   const [isScoringQuiz, setIsScoringQuiz] = useState(false)
 
-  // Step 3 (Skippable): Complexion & Face
+  // Step 4 (Skippable): Complexion & Face
   const [skinUndertone, setSkinUndertone] = useState('neutral')
   const [skinDepth, setSkinDepth] = useState('medium')
   const [faceShape, setFaceShape] = useState('oval')
   const [skipComplexion, setSkipComplexion] = useState(false)
 
-  // Step 4 (Skippable): Body Silhouette & Dimensions
+  // Step 5 (Skippable): Body Silhouette & Dimensions
   const [bodyShape, setBodyShape] = useState('rectangle')
   const [unit, setUnit] = useState('cm')
   const [measurements, setMeasurements] = useState({
@@ -174,13 +179,13 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
 
   useEffect(() => {
     if (isOpen) {
-      loadQuizQuestions()
+      loadQuizQuestions(stylingLane)
     }
-  }, [isOpen])
+  }, [isOpen, stylingLane])
 
-  const loadQuizQuestions = async () => {
+  const loadQuizQuestions = async (lane = stylingLane) => {
     try {
-      const data = await api.getQuizQuestions()
+      const data = await api.getQuizQuestions(lane)
       if (data?.questions && data.questions.length > 0) {
         setQuizQuestions(data.questions)
       }
@@ -241,6 +246,10 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
         avoided_colors: avoidedColors,
         fit_preference: fitPreference,
         formality_preference: Number(formalityPreference),
+      }
+
+      if (stylingLane) {
+        profilePayload.styling_lane = stylingLane
       }
 
       if (name.trim()) {
@@ -306,12 +315,13 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
         {/* Onboarding Header */}
         <div className="modal-header">
           <div>
-            <span className="eyebrow">WELCOME TO VEYRA &bull; STEP {step} OF 4</span>
+            <span className="eyebrow">WELCOME TO VEYRA • STEP {step} OF 5</span>
             <h2 id="onboarding-title" className="modal-title">
-              {step === 1 && 'Establish Your Style Foundations'}
-              {step === 2 && 'Calibrate Your Style Archetype'}
-              {step === 3 && 'Complexion & Facial Harmony'}
-              {step === 4 && 'Proportions & Silhouette Balance'}
+              {step === 1 && 'Wardrobe Department'}
+              {step === 2 && 'Establish Your Style Foundations'}
+              {step === 3 && 'Calibrate Your Style Archetype'}
+              {step === 4 && 'Complexion & Facial Harmony'}
+              {step === 5 && 'Proportions & Silhouette Balance'}
             </h2>
           </div>
           <button type="button" onClick={onClose} className="modal-close-btn" aria-label="Close onboarding">
@@ -319,8 +329,81 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
           </button>
         </div>
 
-        {/* Step 1: Name, Styles, Colors, Fit, Formality */}
+        {/* Step 1: Styling Lane Question */}
         {step === 1 && (
+          <div className="onboarding-step-content animate-fade-in-up">
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <span className="eyebrow" style={{ color: 'var(--accent-olive)', marginBottom: '0.5rem', display: 'block' }}>
+                WARDROBE ORIENTATION
+              </span>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Which section do you usually shop from?
+              </h3>
+              <p className="onboarding-step-intro" style={{ maxWidth: '540px', margin: '0 auto' }}>
+                This tailors garment terminology and silhouette suggestions to your everyday shopping patterns. You may explore and wear any garment in the atelier regardless of this choice.
+              </p>
+            </div>
+
+            <div
+              className="styling-lane-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '1rem',
+                marginBottom: '2rem',
+              }}
+            >
+              {STYLING_LANE_OPTIONS.map((laneOption) => {
+                const isSelected = stylingLane === laneOption.id
+                return (
+                  <button
+                    key={laneOption.id}
+                    type="button"
+                    className={`styling-lane-card ${isSelected ? 'active' : ''}`}
+                    onClick={() => {
+                      setStylingLane(laneOption.id)
+                      loadQuizQuestions(laneOption.id)
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      padding: '1.25rem',
+                      borderRadius: '10px',
+                      border: isSelected ? '2px solid var(--accent-olive)' : '1px solid var(--border-color, #e2e8f0)',
+                      backgroundColor: isSelected ? 'var(--bg-card-selected, rgba(92, 107, 78, 0.08))' : 'var(--bg-card, #fff)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '1.05rem', fontWeight: 600 }}>{laneOption.label}</span>
+                      {isSelected && <Check size={18} color="var(--accent-olive)" />}
+                    </div>
+                    <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                      {laneOption.desc}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="modal-actions-footer" style={{ justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="btn-editorial-primary"
+              >
+                <span>Continue to Style Foundations</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Name, Styles, Fluid Tendency, Colors, Fit, Formality */}
+        {step === 2 && (
           <div className="onboarding-step-content animate-fade-in-up">
             <p className="onboarding-step-intro">
               Configure your atelier alias, aesthetic leanings, core palette affinities, and base tailoring balance.
@@ -349,6 +432,32 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
                     onClick={() => toggleArrayItem(preferredStyles, setPreferredStyles, style.id)}
                   >
                     {style.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Closest to My Style (Silhouette Tendency) */}
+            <div className="form-field" style={{ marginBottom: '1.25rem' }}>
+              <span className="input-label">Closest to My Style</span>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.2rem 0 0.5rem' }}>
+                Silhouette tendencies with neutral, fluid tailoring ease.
+              </p>
+              <div className="chip-group">
+                {FLUID_STYLE_TENDENCIES.map((tendency) => (
+                  <button
+                    key={tendency.id}
+                    type="button"
+                    className={`chip-editorial ${styleTendency === tendency.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setStyleTendency(tendency.id)
+                      if (tendency.id === 'structured_sharp') setFitPreference('slim')
+                      else if (tendency.id === 'relaxed_oversized') setFitPreference('oversized')
+                      else if (tendency.id === 'soft_flowing') setFitPreference('relaxed')
+                      else if (tendency.id === 'mix_of_everything') setFitPreference('regular')
+                    }}
+                  >
+                    {tendency.label}
                   </button>
                 ))}
               </div>
@@ -423,10 +532,19 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
               </div>
             </div>
 
-            <div className="modal-actions-footer">
+            <div className="modal-actions-footer" style={{ justifyContent: 'space-between' }}>
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(1)}
+                className="btn-editorial-ghost"
+              >
+                <ArrowLeft size={15} />
+                <span>Back</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep(3)}
                 className="btn-editorial-primary"
               >
                 <span>Continue to Style Quiz</span>
@@ -436,8 +554,8 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
           </div>
         )}
 
-        {/* Step 2: Style Archetype Quiz */}
-        {step === 2 && (
+        {/* Step 3: Style Archetype Quiz */}
+        {step === 3 && (
           <div className="onboarding-step-content animate-fade-in-up">
             {quizResult ? (
               <div className="quiz-result-view animate-fade-in-up">
@@ -471,7 +589,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
 
                   <button
                     type="button"
-                    onClick={() => setStep(3)}
+                    onClick={() => setStep(4)}
                     className="btn-editorial-primary"
                   >
                     <span>Next: Complexion & Features</span>
@@ -520,7 +638,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
                     type="button"
                     onClick={() => {
                       if (quizIndex > 0) setQuizIndex((prev) => prev - 1)
-                      else setStep(1)
+                      else setStep(2)
                     }}
                     className="btn-editorial-ghost"
                   >
@@ -531,7 +649,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                     <button
                       type="button"
-                      onClick={() => setStep(3)}
+                      onClick={() => setStep(4)}
                       className="btn-editorial-secondary"
                     >
                       Skip Quiz
@@ -559,8 +677,8 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
           </div>
         )}
 
-        {/* Step 3 (Skippable): Skin Undertone, Depth, Face Shape */}
-        {step === 3 && (
+        {/* Step 4 (Skippable): Skin Undertone, Depth, Face Shape */}
+        {step === 4 && (
           <div className="onboarding-step-content animate-fade-in-up">
             <div className="step-optional-banner" style={{ marginBottom: '1.25rem' }}>
               <span className="eyebrow" style={{ color: 'var(--accent-olive)' }}>OPTIONAL ENHANCEMENT</span>
@@ -596,7 +714,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
             <div className="modal-actions-footer" style={{ justifyContent: 'space-between' }}>
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="btn-editorial-ghost"
               >
                 <ArrowLeft size={15} />
@@ -608,7 +726,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
                   type="button"
                   onClick={() => {
                     setSkipComplexion(true)
-                    setStep(4)
+                    setStep(5)
                   }}
                   className="btn-editorial-secondary"
                 >
@@ -618,7 +736,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
                   type="button"
                   onClick={() => {
                     setSkipComplexion(false)
-                    setStep(4)
+                    setStep(5)
                   }}
                   className="btn-editorial-primary"
                 >
@@ -630,8 +748,8 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
           </div>
         )}
 
-        {/* Step 4 (Skippable): Body Silhouette & Dimensions with Strict Privacy Wording */}
-        {step === 4 && (
+        {/* Step 5 (Skippable): Body Silhouette & Dimensions with Strict Privacy Wording */}
+        {step === 5 && (
           <div className="onboarding-step-content animate-fade-in-up">
             {/* Privacy Assurance Callout */}
             <div className="privacy-pill-banner" style={{ marginBottom: '1.25rem' }}>
@@ -645,6 +763,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
               <BodyShapeSelector
                 value={bodyShape}
                 onChange={(val) => setBodyShape(val)}
+                stylingLane={stylingLane}
               />
             </div>
 
@@ -733,7 +852,7 @@ export default function OnboardingModal({ isOpen, onClose, onComplete }) {
             <div className="modal-actions-footer" style={{ justifyContent: 'space-between' }}>
               <button
                 type="button"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="btn-editorial-ghost"
               >
                 <ArrowLeft size={15} />

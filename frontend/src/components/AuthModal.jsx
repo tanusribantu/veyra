@@ -9,12 +9,13 @@ export default function AuthModal({
   initialMode = 'login',
   onSuccess,
 }) {
-  const { login, signUp, loginWithGoogle, resetPassword } = useAuth()
+  const { login, signUp, loginWithGoogle, resetPassword, updatePassword } = useAuth()
   const { addToast } = useToast()
 
-  const [mode, setMode] = useState(initialMode) // 'login' | 'signup' | 'forgot_password'
+  const [mode, setMode] = useState(initialMode) // 'login' | 'signup' | 'forgot_password' | 'set_new_password'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
@@ -26,6 +27,7 @@ export default function AuthModal({
       setSuccessMessage(null)
       setEmail('')
       setPassword('')
+      setConfirmPassword('')
     }
   }, [isOpen, initialMode])
 
@@ -76,6 +78,23 @@ export default function AuthModal({
         await resetPassword(email)
         setSuccessMessage('Password reset link sent! Please check your inbox.')
         addToast('Password reset link sent to your email.', 'info')
+      } else if (mode === 'set_new_password') {
+        if (!password || password.length < 6) {
+          setErrorMessage('Password must be at least 6 characters in length.')
+          setLoading(false)
+          return
+        }
+        if (password !== confirmPassword) {
+          setErrorMessage('Passwords do not match. Please verify and try again.')
+          setLoading(false)
+          return
+        }
+        if (updatePassword) {
+          await updatePassword(password)
+        }
+        addToast('Password updated successfully! Welcome back to Veyra.', 'success')
+        if (onSuccess) onSuccess('set_new_password')
+        onClose()
       }
     } catch (err) {
       setErrorMessage(formatAuthError(err))
@@ -108,16 +127,20 @@ export default function AuthModal({
           <div>
             <span className="eyebrow">
               {mode === 'login'
-                ? 'ATELIER AUTHENTICATION &bull; SIGN IN'
+                ? 'ATELIER AUTHENTICATION • SIGN IN'
                 : mode === 'signup'
-                ? 'ATELIER MEMBERSHIP &bull; JOIN'
-                : 'SECURITY &bull; PASSWORD RESET'}
+                ? 'ATELIER MEMBERSHIP • JOIN'
+                : mode === 'set_new_password'
+                ? 'SECURITY • SET NEW PASSWORD'
+                : 'SECURITY • PASSWORD RESET'}
             </span>
             <h2 className="modal-title" id="auth-modal-title">
               {mode === 'login'
                 ? 'Welcome Back to Veyra'
                 : mode === 'signup'
                 ? 'Create Your Atelier Account'
+                : mode === 'set_new_password'
+                ? 'Set New Password'
                 : 'Reset Your Password'}
             </h2>
           </div>
@@ -134,7 +157,7 @@ export default function AuthModal({
         {/* Modal Body */}
         <div className="auth-modal-body" style={{ padding: '0.5rem 0' }}>
           {/* Tabs for Mode Switching */}
-          {mode !== 'forgot_password' && (
+          {mode !== 'forgot_password' && mode !== 'set_new_password' && (
             <div className="auth-mode-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
               <button
                 type="button"
@@ -176,7 +199,7 @@ export default function AuthModal({
           )}
 
           {/* Social / Google Auth Button */}
-          {mode !== 'forgot_password' && (
+          {mode !== 'forgot_password' && mode !== 'set_new_password' && (
             <div style={{ marginBottom: '1.25rem' }}>
               <button
                 type="button"
@@ -279,25 +302,27 @@ export default function AuthModal({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="auth-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="form-group">
-              <label htmlFor="auth-email-input" className="form-label" style={{ fontSize: '0.8rem', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                <Mail size={13} />
-                <span>Email Address</span>
-              </label>
-              <input
-                id="auth-email-input"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@domain.com"
-                className="form-input"
-                style={{ width: '100%', padding: '0.65rem 0.75rem' }}
-                disabled={loading}
-              />
-            </div>
+            {mode !== 'set_new_password' && (
+              <div className="form-group">
+                <label htmlFor="auth-email-input" className="form-label" style={{ fontSize: '0.8rem', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                  <Mail size={13} />
+                  <span>Email Address</span>
+                </label>
+                <input
+                  id="auth-email-input"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@domain.com"
+                  className="form-input"
+                  style={{ width: '100%', padding: '0.65rem 0.75rem' }}
+                  disabled={loading}
+                />
+              </div>
+            )}
 
-            {mode !== 'forgot_password' && (
+            {mode !== 'forgot_password' && mode !== 'set_new_password' && (
               <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                   <label htmlFor="auth-password-input" className="form-label" style={{ fontSize: '0.8rem', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
@@ -333,6 +358,46 @@ export default function AuthModal({
               </div>
             )}
 
+            {mode === 'set_new_password' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="auth-new-password-input" className="form-label" style={{ fontSize: '0.8rem', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                    <Lock size={13} />
+                    <span>New Password</span>
+                  </label>
+                  <input
+                    id="auth-new-password-input"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimum 6 characters"
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.65rem 0.75rem' }}
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="auth-confirm-password-input" className="form-label" style={{ fontSize: '0.8rem', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                    <Lock size={13} />
+                    <span>Confirm New Password</span>
+                  </label>
+                  <input
+                    id="auth-confirm-password-input"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="form-input"
+                    style={{ width: '100%', padding: '0.65rem 0.75rem' }}
+                    disabled={loading}
+                  />
+                </div>
+              </>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -346,6 +411,8 @@ export default function AuthModal({
                   ? 'Sign In to Atelier'
                   : mode === 'signup'
                   ? 'Create Atelier Account'
+                  : mode === 'set_new_password'
+                  ? 'Update Password'
                   : 'Send Reset Link'}
               </span>
               <ArrowRight size={15} />
@@ -387,7 +454,7 @@ export default function AuthModal({
           >
             <ShieldCheck size={16} style={{ flexShrink: 0, color: 'var(--accent)' }} />
             <span>
-              Zero Photo Uploads &bull; Biometric Free &bull; Encrypted Session. Data isolated strictly to your account.
+              Zero Photo Uploads • Biometric Free • Encrypted Session. Data isolated strictly to your account.
             </span>
           </div>
         </div>

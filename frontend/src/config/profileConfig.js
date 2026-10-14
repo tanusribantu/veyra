@@ -183,8 +183,93 @@ export function deriveFaceShape(answers = {}) {
 }
 
 // =============================================================================
-// 4. BODY SILHOUETTE (NO-TAPE FIGURE CARDS & FIT GUIDED QUESTIONS)
+// 4. STYLING LANE & INCLUSIVE SHOPPING SECTION
 // =============================================================================
+export const STYLING_LANE_OPTIONS = [
+  {
+    id: 'menswear',
+    label: 'Menswear',
+    desc: 'Tailored shirts, trousers, jackets, and classic structured cuts',
+  },
+  {
+    id: 'womenswear',
+    label: 'Womenswear',
+    desc: 'Blouses, dresses, skirts, sarees, and fluid silhouette cuts',
+  },
+  {
+    id: 'mixed',
+    label: 'A mix of both',
+    desc: 'Fluid wardrobe curated across all departments and tailoring styles',
+  },
+  {
+    id: 'prefer_not_to_say',
+    label: 'Prefer not to say',
+    desc: 'Keep suggestions open, versatile, and universally inclusive',
+  },
+]
+
+// Short "closest to my style" fluid and tomboy-friendly option set phrased neutrally
+export const FLUID_STYLE_TENDENCIES = [
+  {
+    id: 'structured_sharp',
+    label: 'Structured and sharp',
+    desc: 'Architectural cuts, tailored lines, and crisp geometry',
+  },
+  {
+    id: 'relaxed_oversized',
+    label: 'Relaxed and oversized',
+    desc: 'Generous proportions, drop shoulders, and effortless tomboy ease',
+  },
+  {
+    id: 'soft_flowing',
+    label: 'Soft and flowing',
+    desc: 'Fluid drapes, breathable ease, and gentle movement',
+  },
+  {
+    id: 'mix_of_everything',
+    label: 'Mix of everything',
+    desc: 'Versatile balance combining structure and relaxed fluidity',
+  },
+]
+
+// =============================================================================
+// 5. BODY SILHOUETTE (NO-TAPE FIGURE CARDS & FIT GUIDED QUESTIONS)
+// =============================================================================
+export const BODY_SHAPE_DISPLAY_LABELS = {
+  womenswear: {
+    hourglass: { label: 'Hourglass', desc: 'Harmonious upper & lower proportion with defined waist drape' },
+    pear: { label: 'Pear / Triangle', desc: 'Lower body carries ease, creating a grounded silhouette' },
+    inverted_triangle: { label: 'Inverted Triangle', desc: 'Broader shoulder line tapering to streamlined hips' },
+    rectangle: { label: 'Rectangle / Straight', desc: 'Linear alignment through shoulders, waist, and hips' },
+    apple: { label: 'Apple / Soft Round', desc: 'Comfortable midsection ease with fluid, graceful lines' },
+    athletic: { label: 'Athletic / Sculpted', desc: 'Structured shoulder posture with trim, active proportions' },
+  },
+  neutral: {
+    hourglass: { label: 'Balanced Frame, Defined Waist', desc: 'Proportional chest and hips with a tapered waistline' },
+    pear: { label: 'Broader Base, Streamlined Torso', desc: 'Lower torso carries width relative to shoulders' },
+    inverted_triangle: { label: 'Broad Shoulders, Tapered Waist', desc: 'Upper silhouette is broader with shoulders tapering to hips' },
+    rectangle: { label: 'Straight / Linear Frame', desc: 'Balanced alignment with consistent width from shoulders to hips' },
+    apple: { label: 'Relaxed Midsection, Fluid Torso', desc: 'Midsection is the primary focal width with comfortable ease' },
+    athletic: { label: 'Structured Shoulders, Athletic Taper', desc: 'Sculpted shoulder line with athletic torso taper' },
+  },
+}
+
+export function getBodyShapeOptions(lane) {
+  const laneKey = lane === 'womenswear' ? 'womenswear' : 'neutral'
+  const mapping = BODY_SHAPE_DISPLAY_LABELS[laneKey] || BODY_SHAPE_DISPLAY_LABELS.neutral
+  return Object.keys(mapping).map((key) => ({
+    id: key,
+    label: mapping[key].label,
+    desc: mapping[key].desc,
+  }))
+}
+
+export function getBodyShapeLabel(shapeId, lane) {
+  const laneKey = lane === 'womenswear' ? 'womenswear' : 'neutral'
+  const mapping = BODY_SHAPE_DISPLAY_LABELS[laneKey] || BODY_SHAPE_DISPLAY_LABELS.neutral
+  return mapping[shapeId]?.label || shapeId
+}
+
 export const BODY_SHAPE_OPTIONS = [
   {
     id: 'hourglass',

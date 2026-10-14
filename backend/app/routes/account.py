@@ -38,7 +38,10 @@ def delete_account():
 
     # 1. Optionally delete from Supabase Auth via Admin API
     supabase_url = current_app.config.get("SUPABASE_URL")
-    supabase_secret_key = current_app.config.get("SUPABASE_SECRET_KEY")
+    supabase_secret_key = (
+        current_app.config.get("SUPABASE_SECRET_KEY")
+        or current_app.config.get("SUPABASE_SERVICE_ROLE_KEY")
+    )
 
     if supabase_url and supabase_secret_key and auth_user_id:
         try:

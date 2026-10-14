@@ -177,6 +177,7 @@ export default function StyleQuizModal({
   onClose,
   onComplete,
   initialResult = null,
+  stylingLane = null,
 }) {
   const { addToast } = useToast()
   const [questions, setQuestions] = useState(FALLBACK_QUESTIONS)
@@ -194,12 +195,12 @@ export default function StyleQuizModal({
         loadQuestions()
       }
     }
-  }, [isOpen, initialResult])
+  }, [isOpen, initialResult, stylingLane])
 
   const loadQuestions = async () => {
     setIsLoadingQuestions(true)
     try {
-      const data = await api.getQuizQuestions()
+      const data = await api.getQuizQuestions(stylingLane)
       if (data && data.questions && data.questions.length > 0) {
         setQuestions(data.questions)
       }

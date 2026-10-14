@@ -514,6 +514,126 @@ STYLE_QUIZ_QUESTIONS = [
     },
 ]
 
+# Short "closest to my style" fluid and tomboy-friendly option set phrased neutrally
+STYLE_TENDENCY_OPTIONS = [
+    {
+        "id": "structured_sharp",
+        "label": "Structured and sharp",
+        "description": "Architectural cuts, tailored lines, and crisp geometry",
+    },
+    {
+        "id": "relaxed_oversized",
+        "label": "Relaxed and oversized",
+        "description": "Generous proportions, drop shoulders, and effortless fluid or tomboy drape",
+    },
+    {
+        "id": "soft_flowing",
+        "label": "Soft and flowing",
+        "description": "Fluid drapes, breathable ease, and gentle movement",
+    },
+    {
+        "id": "mix_of_everything",
+        "label": "Mix of everything",
+        "description": "Versatile harmony combining crisp structure and relaxed fluidity",
+    },
+]
+
+# Lane-adapted option texts preserving identical dimensions, points, and option IDs
+LANE_OPTION_TEXTS: Dict[str, Dict[str, str]] = {
+    "q1_a": {
+        "menswear": "Crisp collared cotton shirt, straight-fit dark jeans, and clean canvas sneakers.",
+        "womenswear": "Crisp collared shirt or tailored blouse, straight-fit dark jeans, and clean canvas sneakers.",
+    },
+    "q1_c": {
+        "menswear": "Vibrant printed short kurta or bright polo tee, relaxed denim, and colorful sneakers.",
+        "womenswear": "Vibrant printed short kurti, breezy top, or bright tee, relaxed denim, and colorful sneakers.",
+    },
+    "q2_b": {
+        "menswear": "Lightweight cotton tee or linen shirt with breathable drawstring pants and flat sandals.",
+        "womenswear": "Lightweight cotton tee, kurti, or breezy tunic with breathable drawstring trousers and flat sandals.",
+    },
+    "q2_c": {
+        "menswear": "Contrast patterned shirt or printed kurta with dark jeans and statement footwear.",
+        "womenswear": "Contrast patterned shirt, kurti, or printed blouse with dark jeans and statement footwear.",
+    },
+    "q3_a": {
+        "menswear": "Neatly pressed solid button-down shirt, tailored trousers, and polished derby dress shoes.",
+        "womenswear": "Neatly pressed button-down shirt or structured blouse, tailored trousers, and polished dress shoes.",
+    },
+    "q3_c": {
+        "menswear": "Earthy handloom cotton kurta or structured blazer over a solid collared shirt with slim trousers.",
+        "womenswear": "Earthy handloom cotton kurta or structured blazer over a solid top with slim trousers.",
+    },
+    "q4_c": {
+        "menswear": "Embroidered casual short kurta with cropped chinos and leather kolhapuris.",
+        "womenswear": "Embroidered casual tunic, kurti, or short kurta with cropped pants and leather kolhapuris.",
+    },
+    "q5_c": {
+        "menswear": "Bold printed casual shirt or festive kurta with dark pants and statement watch.",
+        "womenswear": "Bold printed casual shirt, festive kurti, or statement dress with dark pants and statement watch.",
+    },
+    "q6_a": {
+        "menswear": "Classic solid cotton kurta-pyjama or bandhgala set with subtle textured border.",
+        "womenswear": "Classic silk saree with subtle gold border or elegant festive kurta set.",
+    },
+    "q6_c": {
+        "menswear": "Rich jewel-toned floral or patterned kurta with contrasting stole.",
+        "womenswear": "Rich jewel-toned floral or patterned kurta or festive saree with contrasting dupatta or stole.",
+    },
+    "q6_d": {
+        "menswear": "Modern layered Nehru jacket over a crisp white linen kurta set.",
+        "womenswear": "Modern layered Nehru jacket or structured blazer over a crisp ethnic set or fluid drape.",
+    },
+    "q7_a": {
+        "menswear": "Traditional silk or fine cotton kurta set in timeless ivory or navy.",
+        "womenswear": "Timeless silk saree, festive dress, or fine cotton kurta set in ivory or navy.",
+    },
+    "q7_b": {
+        "menswear": "Soft breathable chikankari or handloom cotton kurta with relaxed pyjama.",
+        "womenswear": "Soft breathable chikankari saree or handloom cotton kurta with relaxed pants.",
+    },
+    "q7_c": {
+        "menswear": "Bright mustard or maroon embroidered festive kurta set with rich texture and contrast.",
+        "womenswear": "Bright mustard or maroon embroidered festive saree, dress, or kurta set with rich texture and contrast.",
+    },
+    "q8_a": {
+        "menswear": "Tailored suit or crisp bandhgala jacket with structured trousers and oxfords.",
+        "womenswear": "Tailored evening trouser suit or structured jacket set with sleek formal footwear.",
+    },
+    "q8_c": {
+        "menswear": "Ornate embroidered sherwani jacket or rich brocade kurta with structured churidar.",
+        "womenswear": "Ornate silk saree, embellished lehenga, or evening dress with rich color accents.",
+    },
+}
+
+
+def get_adapted_quiz_questions(lane: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Returns the scenario questions adapting option texts to the styling lane.
+
+    If lane is 'menswear' or 'womenswear', adapts garment mentions accordingly.
+    If lane is 'mixed', 'prefer_not_to_say', or unspecified/None, retains inclusive multi-lane phrasing.
+    Point values, question IDs, and scoring dimensions are strictly identical across all lanes.
+    """
+    clean_lane = (lane or "").lower().strip()
+    adapted_questions = []
+
+    for q in STYLE_QUIZ_QUESTIONS:
+        q_copy = dict(q)
+        adapted_options = []
+        for opt in q["options"]:
+            opt_copy = dict(opt)
+            opt_id = opt["id"]
+            if clean_lane in ("menswear", "womenswear") and opt_id in LANE_OPTION_TEXTS:
+                lane_map = LANE_OPTION_TEXTS[opt_id]
+                if clean_lane in lane_map:
+                    opt_copy["text"] = lane_map[clean_lane]
+            adapted_options.append(opt_copy)
+        q_copy["options"] = adapted_options
+        adapted_questions.append(q_copy)
+
+    return adapted_questions
+
+
 # Style Archetypes with reference centroids
 STYLE_ARCHETYPES = [
     {

@@ -90,3 +90,52 @@ def test_delete_account_removes_all_user_data(client, app):
         assert BodyMeasurements.query.filter_by(user_id=uid).count() == 0
         assert OutfitConstraint.query.filter_by(user_id=uid).count() == 0
         assert StyleQuizResult.query.filter_by(user_id=uid).count() == 0
+
+
+def test_delete_account_invokes_supabase_admin_api(client, app, mocker):
+    """Account deletion invokes Supabase Admin API with SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY."""
+    mock_delete = mocker.patch("requests.delete")
+    mock_delete.return_value.status_code = 200
+
+    now = int(time.time())
+    token = jwt.encode(
+        {"sub": "sub_admin_del_test", "email": "admin_del@veyra.style", "aud": "authenticated", "exp": now + 3600},
+        TEST_SECRET,
+        algorithm="HS256",
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Test with SUPABASE_SECRET_KEY
+    app.config["SUPABASE_URL"] = "https://example.supabase.co"
+    app.config["SUPABASE_SECRET_KEY"] = "secret_key_123"
+    app.config["SUPABASE_SERVICE_ROLE_KEY"] = ""
+
+    # Call PUT /profile first so user exists
+    client.put("/api/v1/profile", headers=headers, json={"preferred_styles": ["minimal"]})
+    resp = client.delete("/api/v1/account", headers=headers)
+    assert resp.status_code == 200
+    mock_delete.assert_called_with(
+        "https://example.supabase.co/auth/v1/admin/users/sub_admin_del_test",
+        headers={"Authorization": "Bearer secret_key_123", "apikey": "secret_key_123"},
+        timeout=5,
+    )
+
+    # Test with SUPABASE_SERVICE_ROLE_KEY
+    mock_delete.reset_mock()
+    token2 = jwt.encode(
+        {"sub": "sub_admin_del_test_2", "email": "admin_del2@veyra.style", "aud": "authenticated", "exp": now + 3600},
+        TEST_SECRET,
+        algorithm="HS256",
+    )
+    headers2 = {"Authorization": f"Bearer {token2}"}
+    app.config["SUPABASE_SECRET_KEY"] = ""
+    app.config["SUPABASE_SERVICE_ROLE_KEY"] = "service_role_key_456"
+
+    client.put("/api/v1/profile", headers=headers2, json={"preferred_styles": ["casual"]})
+    resp2 = client.delete("/api/v1/account", headers=headers2)
+    assert resp2.status_code == 200
+    mock_delete.assert_called_with(
+        "https://example.supabase.co/auth/v1/admin/users/sub_admin_del_test_2",
+        headers={"Authorization": "Bearer service_role_key_456", "apikey": "service_role_key_456"},
+        timeout=5,
+    )

@@ -26,8 +26,17 @@ export default function GarmentSvg({
 
   const title = ariaLabel || `${primaryColor} ${resolvedCategory}`
 
-  // TOP: Tailored Oxford / T-Shirt / Blouse
-  if (resolvedCategory === 'top' || resolvedCategory === 'shirt' || resolvedCategory === 't-shirt') {
+  // TOP: Tailored Oxford / T-Shirt / Blouse / Kurta / Dress
+  if (
+    resolvedCategory === 'top' ||
+    resolvedCategory === 'shirt' ||
+    resolvedCategory === 't-shirt' ||
+    resolvedCategory === 'kurta' ||
+    resolvedCategory === 'kurti' ||
+    resolvedCategory === 'blouse' ||
+    resolvedCategory === 'dress' ||
+    resolvedCategory === 'saree'
+  ) {
     return (
       <svg
         viewBox="0 0 200 220"

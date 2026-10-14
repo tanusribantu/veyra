@@ -23,16 +23,36 @@ const QUICK_COLORS = [
 const CATEGORIES = [
   { id: 'shirt', label: 'Tailored Shirt', slot: 'top' },
   { id: 't-shirt', label: 'T-Shirt / Polo', slot: 'top' },
+  { id: 'kurta', label: 'Kurta / Bandhgala', slot: 'top' },
+  { id: 'kurti', label: 'Kurti / Tunic', slot: 'top' },
+  { id: 'blouse', label: 'Blouse / Top', slot: 'top' },
   { id: 'sweater', label: 'Knit / Sweater', slot: 'top' },
   { id: 'jacket', label: 'Jacket / Blazer', slot: 'top' },
+  { id: 'dress', label: 'Dress / Gown', slot: 'top' },
+  { id: 'saree', label: 'Saree / Draped Garment', slot: 'top' },
   { id: 'trousers', label: 'Trousers / Slacks', slot: 'bottom' },
   { id: 'chinos', label: 'Chinos', slot: 'bottom' },
   { id: 'jeans', label: 'Denim Jeans', slot: 'bottom' },
+  { id: 'skirt', label: 'Skirt / Maxi', slot: 'bottom' },
   { id: 'sneakers', label: 'Sneakers', slot: 'footwear' },
   { id: 'loafers', label: 'Loafers / Oxfords', slot: 'footwear' },
   { id: 'boots', label: 'Boots', slot: 'footwear' },
   { id: 'accessory', label: 'Accessory Piece', slot: 'accessory' },
 ]
+
+const LANE_CATEGORY_SUGGESTIONS = {
+  menswear: ['shirt', 't-shirt', 'jacket', 'sweater', 'kurta', 'trousers', 'chinos', 'jeans', 'sneakers', 'loafers', 'boots', 'accessory'],
+  womenswear: ['blouse', 'dress', 'saree', 'skirt', 'kurti', 'shirt', 't-shirt', 'sweater', 'jacket', 'trousers', 'jeans', 'sneakers', 'loafers', 'boots', 'accessory'],
+  mixed: ['shirt', 'blouse', 'kurta', 'kurti', 'dress', 'saree', 'jacket', 'sweater', 't-shirt', 'trousers', 'chinos', 'jeans', 'skirt', 'sneakers', 'loafers', 'boots', 'accessory'],
+  prefer_not_to_say: ['shirt', 't-shirt', 'kurta', 'kurti', 'blouse', 'dress', 'saree', 'sweater', 'jacket', 'trousers', 'chinos', 'jeans', 'skirt', 'sneakers', 'loafers', 'boots', 'accessory'],
+}
+
+const LANE_SILHOUETTE_SUGGESTIONS = {
+  menswear: ['straight', 'fitted', 'relaxed'],
+  womenswear: ['flowy', 'fitted', 'relaxed', 'wide_leg', 'cropped', 'straight'],
+  mixed: ['straight', 'relaxed', 'fitted', 'flowy', 'wide_leg', 'cropped'],
+  prefer_not_to_say: ['straight', 'relaxed', 'fitted', 'flowy', 'wide_leg', 'cropped'],
+}
 
 const SILHOUETTES = [
   { id: 'fitted', label: 'Fitted' },
@@ -70,7 +90,7 @@ const ACCESSORY_TYPES = [
   { id: 'other', label: 'Other Accent' },
 ]
 
-export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initialItem = null }) {
+export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initialItem = null, stylingLane = null }) {
   const { addToast } = useToast()
   const isEditing = Boolean(initialItem)
 
@@ -90,6 +110,19 @@ export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initia
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+
+  const suggestedCategoryIds = LANE_CATEGORY_SUGGESTIONS[stylingLane] || []
+  const suggestedSilhouettes = LANE_SILHOUETTE_SUGGESTIONS[stylingLane] || []
+
+  const displayedCategories = [...CATEGORIES].sort((a, b) => {
+    if (stylingLane === 'menswear' || stylingLane === 'womenswear') {
+      const aSug = suggestedCategoryIds.includes(a.id)
+      const bSug = suggestedCategoryIds.includes(b.id)
+      if (aSug && !bSug) return -1
+      if (!aSug && bSug) return 1
+    }
+    return 0
+  })
 
   if (!isOpen) return null
 
@@ -174,7 +207,7 @@ export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initia
             <div className="preview-caption">
               <strong>{form.name || 'Untitled Garment'}</strong>
               <span>
-                {form.primary_color} &bull; {form.silhouette} &bull; Formality {form.formality}/5
+                {form.primary_color} • {form.silhouette} • Formality {form.formality}/5
               </span>
             </div>
           </div>
@@ -195,18 +228,32 @@ export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initia
             </div>
 
             <div className="form-field">
-              <span className="input-label">Garment Classification</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <span className="input-label" style={{ marginBottom: 0 }}>Garment Classification</span>
+                {stylingLane && (
+                  <span className="eyebrow" style={{ fontSize: '0.68rem', color: 'var(--accent-olive)' }}>
+                    All garments available
+                  </span>
+                )}
+              </div>
               <div className="chip-group">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`chip-editorial ${form.category === cat.id ? 'active' : ''}`}
-                    onClick={() => handleCategoryChange(cat.id)}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
+                {displayedCategories.map((cat) => {
+                  const isSuggested = suggestedCategoryIds.includes(cat.id)
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`chip-editorial ${form.category === cat.id ? 'active' : ''}`}
+                      onClick={() => handleCategoryChange(cat.id)}
+                      title={isSuggested ? 'Suggested for your styling lane' : ''}
+                    >
+                      {cat.label}
+                      {isSuggested && (stylingLane === 'menswear' || stylingLane === 'womenswear') && (
+                        <span style={{ fontSize: '0.68rem', opacity: 0.75, marginLeft: '4px' }}>★</span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
@@ -264,9 +311,14 @@ export default function WardrobeItemModal({ isOpen, onClose, onItemSaved, initia
                   value={form.silhouette}
                   onChange={(e) => setForm({ ...form, silhouette: e.target.value })}
                 >
-                  {SILHOUETTES.map((s) => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
-                  ))}
+                  {SILHOUETTES.map((s) => {
+                    const isSuggested = suggestedSilhouettes.includes(s.id)
+                    return (
+                      <option key={s.id} value={s.id}>
+                        {s.label} {isSuggested && (stylingLane === 'menswear' || stylingLane === 'womenswear') ? '(Suggested)' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
             </div>

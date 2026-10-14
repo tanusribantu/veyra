@@ -1,10 +1,18 @@
 import React, { useState } from 'react'
-import { BODY_SHAPE_OPTIONS, FIT_GUIDED_QUESTIONS, deriveBodyShapeFromFit } from '../config/profileConfig'
+import {
+  BODY_SHAPE_OPTIONS,
+  getBodyShapeOptions,
+  getBodyShapeLabel,
+  FIT_GUIDED_QUESTIONS,
+  deriveBodyShapeFromFit,
+} from '../config/profileConfig'
 import { HelpCircle, Sparkles, Check, Ruler } from 'lucide-react'
 
-export default function BodyShapeSelector({ value, onChange, onOpenTapeMeasurements }) {
+export default function BodyShapeSelector({ value, onChange, onOpenTapeMeasurements, stylingLane }) {
   const [showGuided, setShowGuided] = useState(false)
   const [guidedAnswers, setGuidedAnswers] = useState({})
+
+  const shapes = getBodyShapeOptions(stylingLane)
 
   const handleAnswerSelect = (questionId, optionId) => {
     const updated = { ...guidedAnswers, [questionId]: optionId }
@@ -43,7 +51,7 @@ export default function BodyShapeSelector({ value, onChange, onOpenTapeMeasureme
           marginBottom: '0.75rem',
         }}
       >
-        {BODY_SHAPE_OPTIONS.map((shape) => {
+        {shapes.map((shape) => {
           const isSelected = value === shape.id
           return (
             <button
@@ -129,7 +137,7 @@ export default function BodyShapeSelector({ value, onChange, onOpenTapeMeasureme
 
           {value && (
             <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', color: 'var(--accent-olive)', fontWeight: 500 }}>
-              Derived Silhouette Preference: <strong>{BODY_SHAPE_OPTIONS.find((b) => b.id === value)?.label || value}</strong> (Click any card above to override).
+              Derived Silhouette Preference: <strong>{getBodyShapeLabel(value, stylingLane)}</strong> (Click any card above to override).
             </div>
           )}
         </div>

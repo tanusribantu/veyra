@@ -22,6 +22,15 @@ export default function Wardrobe() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const [stylingLane, setStylingLane] = useState(null)
+
+  useEffect(() => {
+    if (api && typeof api.getProfile === 'function') {
+      api.getProfile().then((p) => {
+        if (p?.styling_lane) setStylingLane(p.styling_lane)
+      }).catch(() => {})
+    }
+  }, [])
 
   useEffect(() => {
     loadWardrobe()
@@ -237,6 +246,7 @@ export default function Wardrobe() {
         }}
         onItemSaved={loadWardrobe}
         initialItem={editingItem}
+        stylingLane={stylingLane}
       />
     </div>
   )

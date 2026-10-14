@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Recommendations from './pages/Recommendations'
 import Wardrobe from './pages/Wardrobe'
 import StyleProfile from './pages/StyleProfile'
+import ResetPassword from './pages/ResetPassword'
 import MeasurementsModal from './components/MeasurementsModal'
 import OnboardingModal from './components/OnboardingModal'
 import AuthModal from './components/AuthModal'
@@ -13,7 +14,22 @@ import { api } from './services/api'
 import './App.css'
 
 export function AppContent() {
-  const { isAuthenticated, isLoading, isFirstLogin, clearFirstLogin, logout } = useAuth()
+  const { isAuthenticated, isLoading, isFirstLogin, clearFirstLogin, logout, isPasswordRecovery, clearPasswordRecovery } = useAuth()
+
+  const [isResetPasswordRoute, setIsResetPasswordRoute] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const path = window.location.pathname || ''
+    const hash = window.location.hash || ''
+    const search = window.location.search || ''
+    return (
+      path === '/reset-password' ||
+      path.startsWith('/reset-password/') ||
+      hash.startsWith('#/reset-password') ||
+      hash.startsWith('#reset-password') ||
+      hash.includes('otp_expired') ||
+      search.includes('otp_expired')
+    )
+  })
 
   const [activeTab, setActiveTab] = useState(() => {
     const hash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : ''
@@ -35,9 +51,17 @@ export function AppContent() {
     return false
   })
 
-  // Route protection: If unauthenticated, redirect any protected hash to home
+  // Password recovery link listener: automatically open reset password page
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isPasswordRecovery) {
+      setIsResetPasswordRoute(true)
+      setIsAuthModalOpen(false)
+    }
+  }, [isPasswordRecovery])
+
+  // Route protection: If unauthenticated, redirect any protected hash to home unless on reset-password route
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !isResetPasswordRoute) {
       if (activeTab !== 'home') {
         setActiveTab('home')
         if (typeof window !== 'undefined') {
@@ -45,7 +69,7 @@ export function AppContent() {
         }
       }
     }
-  }, [isAuthenticated, isLoading, activeTab])
+  }, [isAuthenticated, isLoading, activeTab, isResetPasswordRoute])
 
   // First-time login triggers onboarding modal
   useEffect(() => {
@@ -56,22 +80,40 @@ export function AppContent() {
   }, [isAuthenticated, isFirstLogin, clearFirstLogin])
 
   useEffect(() => {
-    // Sync hash changes with navigation
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '')
-      if (['home', 'recommendations', 'wardrobe', 'profile'].includes(hash)) {
-        if (!isAuthenticated && hash !== 'home') {
+    // Sync hash and path changes with navigation and reset route
+    const handleLocationChange = () => {
+      const path = window.location.pathname || ''
+      const hash = window.location.hash || ''
+      const search = window.location.search || ''
+      const isReset = (
+        path === '/reset-password' ||
+        path.startsWith('/reset-password/') ||
+        hash.startsWith('#/reset-password') ||
+        hash.startsWith('#reset-password') ||
+        hash.includes('otp_expired') ||
+        search.includes('otp_expired')
+      )
+      setIsResetPasswordRoute(isReset)
+
+      const cleanHash = hash.replace('#', '')
+      if (['home', 'recommendations', 'wardrobe', 'profile'].includes(cleanHash)) {
+        if (!isAuthenticated && cleanHash !== 'home') {
           setAuthModalMode('login')
           setIsAuthModalOpen(true)
           window.location.hash = '#home'
           setActiveTab('home')
           return
         }
-        setActiveTab(hash)
+        setActiveTab(cleanHash)
       }
     }
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
+
+    window.addEventListener('hashchange', handleLocationChange)
+    window.addEventListener('popstate', handleLocationChange)
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange)
+      window.removeEventListener('popstate', handleLocationChange)
+    }
   }, [isAuthenticated])
 
   useEffect(() => {
@@ -89,7 +131,17 @@ export function AppContent() {
     }
   }
 
+  const handleResetComplete = () => {
+    setIsResetPasswordRoute(false)
+    clearPasswordRecovery()
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/')
+    }
+    handleNavigate('home')
+  }
+
   const handleNavigate = (tabId) => {
+    setIsResetPasswordRoute(false)
     if (!isAuthenticated && tabId !== 'home') {
       setAuthModalMode('login')
       setIsAuthModalOpen(true)
@@ -131,35 +183,44 @@ export function AppContent() {
       />
 
       <main className="main-content">
-        {/* Unauthenticated users only see the landing page */}
-        {(!isAuthenticated || activeTab === 'home') && (
-          <Home
-            onNavigate={handleNavigate}
-            onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
-            onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        {isResetPasswordRoute ? (
+          <ResetPassword
+            onComplete={handleResetComplete}
             onOpenAuth={handleOpenAuth}
-            isAuthenticated={isAuthenticated}
-            measurementsMissing={measurementsMissing}
           />
-        )}
+        ) : (
+          <>
+            {/* Unauthenticated users only see the landing page */}
+            {(!isAuthenticated || activeTab === 'home') && (
+              <Home
+                onNavigate={handleNavigate}
+                onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
+                onOpenOnboarding={() => setIsOnboardingOpen(true)}
+                onOpenAuth={handleOpenAuth}
+                isAuthenticated={isAuthenticated}
+                measurementsMissing={measurementsMissing}
+              />
+            )}
 
-        {/* Protected routes accessible only when authenticated */}
-        {isAuthenticated && activeTab === 'recommendations' && (
-          <Recommendations
-            onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
-          />
-        )}
+            {/* Protected routes accessible only when authenticated */}
+            {isAuthenticated && activeTab === 'recommendations' && (
+              <Recommendations
+                onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
+              />
+            )}
 
-        {isAuthenticated && activeTab === 'wardrobe' && (
-          <Wardrobe />
-        )}
+            {isAuthenticated && activeTab === 'wardrobe' && (
+              <Wardrobe />
+            )}
 
-        {isAuthenticated && activeTab === 'profile' && (
-          <StyleProfile
-            onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
-            onOpenOnboarding={() => setIsOnboardingOpen(true)}
-            measurementsMissing={measurementsMissing}
-          />
+            {isAuthenticated && activeTab === 'profile' && (
+              <StyleProfile
+                onOpenMeasurements={() => setIsMeasurementsModalOpen(true)}
+                onOpenOnboarding={() => setIsOnboardingOpen(true)}
+                measurementsMissing={measurementsMissing}
+              />
+            )}
+          </>
         )}
       </main>
 

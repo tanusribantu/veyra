@@ -2216,3 +2216,8 @@
   background-color: rgba(92, 107, 78, 0.04);
 }
 
+.styling-lane-card:hover {
+  border-color: var(--accent-olive) !important;
+  background-color: rgba(92, 107, 78, 0.04);
+}
+

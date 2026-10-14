@@ -6,15 +6,16 @@ import { ToastProvider } from '../components/Toast'
 import * as AuthContextModule from '../context/AuthContext'
 
 describe('AuthModal Component', () => {
-  it('renders login modal by default', () => {
+  it('renders login modal by default with real bullet in eyebrow text instead of literal &bull;', () => {
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       login: vi.fn(),
       signUp: vi.fn(),
       loginWithGoogle: vi.fn(),
       resetPassword: vi.fn(),
+      updatePassword: vi.fn(),
     })
 
-    render(
+    const { container } = render(
       <ToastProvider>
         <AuthModal isOpen={true} initialMode="login" onClose={() => {}} />
       </ToastProvider>
@@ -22,6 +23,11 @@ describe('AuthModal Component', () => {
 
     expect(screen.getByText(/Welcome Back to Veyra/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Sign In to Atelier/i })).toBeInTheDocument()
+
+    // Assert eyebrow does NOT show literal "&bull;" and contains the real bullet "•"
+    expect(container.innerHTML).not.toContain('&amp;bull;')
+    expect(container.innerHTML).not.toContain('&bull;')
+    expect(container.textContent).toContain('•')
   })
 
   it('renders signup modal and switches between modes', async () => {
@@ -30,6 +36,7 @@ describe('AuthModal Component', () => {
       signUp: vi.fn(),
       loginWithGoogle: vi.fn(),
       resetPassword: vi.fn(),
+      updatePassword: vi.fn(),
     })
 
     render(
@@ -56,6 +63,7 @@ describe('AuthModal Component', () => {
       signUp: vi.fn(),
       loginWithGoogle: vi.fn(),
       resetPassword: mockResetPassword,
+      updatePassword: vi.fn(),
     })
 
     render(
@@ -75,5 +83,39 @@ describe('AuthModal Component', () => {
     })
 
     expect(mockResetPassword).toHaveBeenCalledWith('reset@example.com')
+  })
+
+  it('renders "set new password" form and submits updated password', async () => {
+    const mockUpdatePassword = vi.fn().mockResolvedValue({})
+    const handleClose = vi.fn()
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      login: vi.fn(),
+      signUp: vi.fn(),
+      loginWithGoogle: vi.fn(),
+      resetPassword: vi.fn(),
+      updatePassword: mockUpdatePassword,
+    })
+
+    render(
+      <ToastProvider>
+        <AuthModal isOpen={true} initialMode="set_new_password" onClose={handleClose} />
+      </ToastProvider>
+    )
+
+    expect(screen.getByRole('heading', { name: /Set New Password/i })).toBeInTheDocument()
+
+    const passwordInput = screen.getByLabelText(/^New Password$/i)
+    const confirmInput = screen.getByLabelText(/^Confirm New Password$/i)
+
+    fireEvent.change(passwordInput, { target: { value: 'NewSecret123!' } })
+    fireEvent.change(confirmInput, { target: { value: 'NewSecret123!' } })
+
+    const updateBtn = screen.getByRole('button', { name: /Update Password/i })
+    await act(async () => {
+      fireEvent.click(updateBtn)
+    })
+
+    expect(mockUpdatePassword).toHaveBeenCalledWith('NewSecret123!')
+    expect(handleClose).toHaveBeenCalled()
   })
 })
